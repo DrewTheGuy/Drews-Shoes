@@ -367,15 +367,65 @@ body {
 /* =========================
    RESPONSIVE
 ========================= */
-@media (max-width: 640px) {
-  .header { padding: 0 16px; }
-  .nav-btn { padding: 6px 10px; font-size: 12px; }
-  .container { padding: 36px 16px 60px; }
-  .hero { min-height: 40vh; padding: 52px 16px 60px; }
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (max-width: 768px) {
+  /* Header — stack logo and nav vertically */
+  .header {
+    height: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+  .left { gap: 10px; }
+  .nav { width: 100%; gap: 4px; flex-wrap: wrap; }
+  .nav-btn { padding: 6px 10px; font-size: 11px; flex: 1; text-align: center; }
+
+  /* Hero */
+  .hero { min-height: 44vh; padding: 44px 16px 52px; }
+  .hero-content h1 { letter-spacing: -2px; }
+  .hero-socials { bottom: 16px; right: 16px; }
+
+  /* Container */
+  .container { padding: 32px 16px 56px; }
+
+  /* Grid — 2 columns */
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* Section headers */
+  .section-header { margin-bottom: 20px; }
+  .section-gap { margin-top: 48px; }
+
+  /* Modal */
+  .modal { padding: 24px 20px; }
+  .modal-btn { font-size: 13px; padding: 12px 16px; }
+
+  /* Lightbox */
+  .lightbox-img {
+    width: min(380px, 88vw);
+    height: min(380px, 88vw);
+  }
+  .lightbox-arrow.prev { left: -36px; }
+  .lightbox-arrow.next { right: -36px; }
+  .lightbox-close { top: 12px; right: 12px; }
 }
+
+@media (max-width: 480px) {
+  /* Brand name smaller on very small screens */
+  .brand-text h1 { font-size: 17px; letter-spacing: 2px; }
+
+  /* Hero text */
+  .hero-content h1 { letter-spacing: -1.5px; }
+  .hero-sub { font-size: 15px; }
+
+  /* Cards slightly smaller text */
+  .card-name { font-size: 12px; }
+  .price { font-size: 14px; }
+  .btn { font-size: 10px; padding: 6px 10px; }
+}
+
 @media (max-width: 380px) {
   .grid { grid-template-columns: 1fr; }
+  .nav-btn { font-size: 10px; padding: 5px 8px; }
 }
 
 /* =========================
