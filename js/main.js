@@ -1,3 +1,5 @@
+const SUPABASE_URL = "https://jnxobqrlpdtpsumnwvde.supabase.co";
+const SUPABASE_KEY = "sb_publishable_UK_x5tuLJIntL4-EFqCqKA_bx-3QXdT";
 // ================================
 //  SNEAKERS — add items here
 // ================================
