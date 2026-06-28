@@ -61,14 +61,6 @@ const shoes = [
     "images": [
       "images/products/aj17-dorenbecher-IO7684-921.jpg"
     ]
-  },
-  {
-    "name": "sss",
-    "price": "$247",
-    "status": "in-stock",
-    "image": "",
-    "images": [],
-    "size": 12
   }
 ];
 
