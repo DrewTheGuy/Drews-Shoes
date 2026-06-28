@@ -210,13 +210,8 @@
   <!-- PRODUCT LIST -->
   <div class="product-list" id="productList"></div>
 
-  <!-- EXPORT -->
-  <div class="export-card">
-    <div class="export-info">
-      <h3>Export & Update Site</h3>
-      <p>Downloads an updated main.js — replace the file<br>in your site folder and re-upload to GitHub.</p>
-    </div>
-    <button class="btn-export" onclick="exportJS()">Download main.js</button>
+  <div id="statusBar" style="display:none; background:#fff; border:1px solid #e8e8e8; border-radius:12px; padding:14px 20px; margin-top:24px; font-size:12px; color:#888; font-weight:600; letter-spacing:0.5px;">
+    Loading products from database...
   </div>
 
 </div>
@@ -225,33 +220,77 @@
 
 <script>
 // ================================
-//  DEFAULT DATA (from your current main.js)
+//  SUPABASE CONFIG
 // ================================
-const defaultData = {
-  sneakers: [
-    { name: 'Nike Mind 001 Flyknit "Bronze Eclipse / Total Orange"', size: 7, price: "$155", status: "in-stock", image: "images/products/mind-001-IR2175-200.jpg", images: ["images/products/mind-001-IR2175-200.jpg"] },
-    { name: 'Nike Mind 001 Flyknit "Bronze Eclipse / Total Orange"', size: 15, price: "$280", status: "in-stock", image: "images/products/mind-001-IR2175-200.jpg", images: ["images/products/mind-001-IR2175-200.jpg"] },
-    { name: 'Air Jordan 3 PRM "BIN23"', size: 9, price: "$650", status: "in-stock", image: "images/products/jordan-3-bin23-IO7744-600.jpg", images: ["images/products/jordan-3-bin23-IO7744-600.jpg"] },
-    { name: 'Nike Kobe 5 Protro "Caitlin Clark Rookie of the Year"', size: 9.5, price: "$240", status: "in-stock", image: "images/products/kobe-5-IV2712-001.jpg", images: ["images/products/kobe-5-IV2712-001.jpg"] },
-    { name: 'Nike Kobe 5 Protro "Caitlin Clark Rookie of the Year"', size: 11.5, price: "$240", status: "in-stock", image: "images/products/kobe-5-IV2712-001.jpg", images: ["images/products/kobe-5-IV2712-001.jpg"] },
-    { name: 'Nike Air Jordan 17 "Doernbecher Freestyle"', size: 10, price: "$295", status: "in-stock", image: "images/products/aj17-dorenbecher-IO7684-921.jpg", images: ["images/products/aj17-dorenbecher-IO7684-921.jpg"] }
-  ],
-  streetwear: [
-    { name: "Supreme Ushanka Hat", meta: "S/M", price: "$100", status: "in-stock", image: "images/products/supreme-ushanka.jpg", images: ["images/products/supreme-ushanka.jpg"] }
-  ],
-  cards: [
-    { name: "Topps 2025-26 NBA Hoops", meta: "Hobby Box", price: "$230", status: "in-stock", image: "images/products/topps-hoops-hobby.jpg", images: ["images/products/topps-hoops-hobby.jpg"] }
-  ]
-};
+const SUPABASE_URL = "https://jnxobqrlpdtpsumnwvde.supabase.co";
+const SUPABASE_KEY = "sb_publishable_UK_x5tuLJIntL4-EFqCqKA_bx-3QXdT";
+
+function sbHeaders() {
+  return {
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`,
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+  };
+}
+
+async function sbFetch(path, options = {}) {
+  const res = await fetch(SUPABASE_URL + path, { headers: sbHeaders(), ...options });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// Normalize a Supabase row to the shape the admin uses
+function normalize(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    size: row.size,
+    meta: row.meta,
+    price: row.price,
+    status: row.status,
+    stock: row.stock,
+    image: row.image,
+    images: (() => { try { return JSON.parse(row.images); } catch(e) { return [row.image]; } })(),
+    stripeLink: row.stripe_link
+  };
+}
 
 // ================================
 //  STATE
 // ================================
 let currentTab = "sneakers";
-let data = JSON.parse(localStorage.getItem("drews-admin-data") || JSON.stringify(defaultData));
+let data = { sneakers: [], streetwear: [], cards: [] };
 
-function save() {
-  localStorage.setItem("drews-admin-data", JSON.stringify(data));
+function setStatus(msg) {
+  const bar = document.getElementById("statusBar");
+  bar.style.display = msg ? "block" : "none";
+  bar.textContent = msg;
+}
+
+// ================================
+//  LOAD FROM SUPABASE
+// ================================
+async function loadProducts() {
+  setStatus("Loading products...");
+  try {
+    const rows = await sbFetch("/rest/v1/products?select=*&order=id");
+    data = { sneakers: [], streetwear: [], cards: [] };
+    rows.forEach(row => {
+      const item = normalize(row);
+      if (data[item.category]) data[item.category].push(item);
+    });
+    setStatus("");
+    renderList();
+  } catch(e) {
+    setStatus("Could not load products — check your connection.");
+    console.error(e);
+  }
 }
 
 // ================================
@@ -262,7 +301,6 @@ function switchTab(tab) {
   document.querySelectorAll(".tab").forEach((t, i) => {
     t.classList.toggle("active", ["sneakers","streetwear","cards"][i] === tab);
   });
-  // Toggle size vs meta field
   const isSneakers = tab === "sneakers";
   document.getElementById("sizeGroup").style.display = isSneakers ? "" : "none";
   document.getElementById("metaGroup").style.display = isSneakers ? "none" : "";
@@ -281,33 +319,47 @@ function previewImg(src) {
 // ================================
 //  ADD PRODUCT
 // ================================
-function addProduct() {
+async function addProduct() {
   const name = document.getElementById("inputName").value.trim();
   const price = document.getElementById("inputPrice").value.trim();
   const status = document.getElementById("inputStatus").value;
   const image = document.getElementById("inputImage").value.trim();
   const extraImages = document.getElementById("inputImages").value.trim().split("\n").map(s => s.trim()).filter(Boolean);
   const images = image ? [image, ...extraImages] : extraImages;
+  const stripeLink = document.getElementById("inputStripe").value.trim();
 
   if (!name || !price) { showToast("Name and price are required"); return; }
 
-  const stripeLink = document.getElementById("inputStripe").value.trim();
-  const item = { name, price, status, image: image || "", images };
-  if (stripeLink) item.stripeLink = stripeLink;
+  const payload = {
+    name, price, status, category: currentTab,
+    image: image || "",
+    images: JSON.stringify(images),
+    stripe_link: stripeLink || null,
+    stock: 1
+  };
 
   if (currentTab === "sneakers") {
     const size = parseFloat(document.getElementById("inputSize").value);
     if (!size) { showToast("Size is required for sneakers"); return; }
-    item.size = size;
+    payload.size = size;
   } else {
-    item.meta = document.getElementById("inputMeta").value.trim();
+    payload.meta = document.getElementById("inputMeta").value.trim();
   }
 
-  data[currentTab].push(item);
-  save();
-  renderList();
-  clearForm();
-  showToast("Product added!");
+  try {
+    const rows = await sbFetch("/rest/v1/products", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    const item = normalize(rows[0]);
+    data[currentTab].push(item);
+    renderList();
+    clearForm();
+    showToast("Product added!");
+  } catch(e) {
+    showToast("Failed to add product");
+    console.error(e);
+  }
 }
 
 function clearForm() {
@@ -326,21 +378,21 @@ function renderList() {
   const list = document.getElementById("productList");
   const items = data[currentTab];
 
-  if (!items.length) {
+  if (!items || !items.length) {
     list.innerHTML = '<div class="empty">No products yet — add one above.</div>';
     return;
   }
 
   list.innerHTML = items.map((item, i) => {
     const meta = item.meta || (item.size ? "Size US " + item.size : "");
-    const isSold = item.status === "sold";
+    const isSold = item.status === "sold" || item.stock <= 0;
     const isSneaker = currentTab === "sneakers";
     return `
       <div class="product-row" id="row-${i}">
         <img class="product-thumb" src="${item.image}" onerror="this.src=''" alt="${item.name}">
         <div class="product-info">
           <div class="product-name">${item.name}</div>
-          <div class="product-meta">${meta}${item.stripeLink ? ' · <span style="color:#635bff;font-weight:700;">Stripe ✓</span>' : ''}</div>
+          <div class="product-meta">${meta}${item.stripeLink ? ' · <span style="color:#635bff;font-weight:700;">Stripe ✓</span>' : ''} · Stock: ${item.stock}</div>
         </div>
         <div class="product-price">${item.price}</div>
         <div class="product-actions">
@@ -370,6 +422,10 @@ function renderList() {
             <label>Price</label>
             <input type="text" id="edit-price-${i}" value="${item.price}">
           </div>
+          <div class="form-group">
+            <label>Stock</label>
+            <input type="number" id="edit-stock-${i}" value="${item.stock}" min="0">
+          </div>
           <div class="form-group full">
             <label>Image Path or URL</label>
             <input type="text" id="edit-image-${i}" value="${item.image}">
@@ -391,265 +447,40 @@ function renderList() {
 // ================================
 //  TOGGLE STATUS
 // ================================
-function toggleStatus(i) {
-  data[currentTab][i].status = data[currentTab][i].status === "sold" ? "in-stock" : "sold";
-  save();
-  renderList();
-  showToast("Status updated");
+async function toggleStatus(i) {
+  const item = data[currentTab][i];
+  const newStatus = item.status === "sold" ? "in-stock" : "sold";
+  const newStock = newStatus === "sold" ? 0 : 1;
+  try {
+    await sbFetch(`/rest/v1/products?id=eq.${item.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: newStatus, stock: newStock })
+    });
+    item.status = newStatus;
+    item.stock = newStock;
+    renderList();
+    showToast("Status updated");
+  } catch(e) {
+    showToast("Failed to update status");
+    console.error(e);
+  }
 }
 
 // ================================
 //  DELETE
 // ================================
-function deleteProduct(i) {
+async function deleteProduct(i) {
   if (!confirm("Remove this product?")) return;
-  data[currentTab].splice(i, 1);
-  save();
-  renderList();
-  showToast("Product removed");
-}
-
-// ================================
-//  EXPORT main.js
-// ================================
-function exportJS() {
-  function serialize(arr) {
-    return JSON.stringify(arr, null, 2);
+  const item = data[currentTab][i];
+  try {
+    await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
+    data[currentTab].splice(i, 1);
+    renderList();
+    showToast("Product removed");
+  } catch(e) {
+    showToast("Failed to delete product");
+    console.error(e);
   }
-
-  const productData = `// ================================
-//  SNEAKERS — add items here
-// ================================
-const shoes = ${serialize(data.sneakers)};
-
-// ================================
-//  STREETWEAR — add items here
-// ================================
-const streetwear = ${serialize(data.streetwear)};
-
-// ================================
-//  TRADING CARDS — add items here
-// ================================
-const cards = ${serialize(data.cards)};
-
-// ##PRODUCT_DATA_END##`;
-
-  // Fetch the real main.js and replace only the product data section
-  fetch("js/main.js")
-    .then(r => r.text())
-    .then(existingJS => {
-      const marker = "// ##PRODUCT_DATA_END##";
-      const markerIndex = existingJS.indexOf(marker);
-      if (markerIndex === -1) {
-        // Fallback: just download the product data block
-        download(productData + "
-
-// Paste above into your main.js before the ##PRODUCT_DATA_END## marker");
-        return;
-      }
-      const afterMarker = existingJS.slice(markerIndex + marker.length);
-      const finalJS = productData + afterMarker;
-      download(finalJS);
-    })
-    .catch(() => {
-      download(productData);
-      showToast("Could not load main.js — downloading data only");
-    });
-
-  function download(content) {
-    const blob = new Blob([content], { type: "text/javascript" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "main.js";
-    a.click();
-    showToast("main.js downloaded!");
-  }
-}
-
-function openLightbox(item, startIndex) {
-  lbImages = item.images && item.images.length ? item.images : [item.image];
-  lbIndex = startIndex || 0;
-  const displayMeta = item.meta || (item.size ? "Size US " + item.size : "");
-  document.getElementById("lbName").textContent = item.name;
-  document.getElementById("lbMeta").textContent = displayMeta + "  ·  " + item.price;
-  const dotsEl = document.getElementById("lbDots");
-  dotsEl.innerHTML = "";
-  if (lbImages.length > 1) {
-    lbImages.forEach((_, i) => {
-      const dot = document.createElement("div");
-      dot.className = "lightbox-dot" + (i === lbIndex ? " active" : "");
-      dot.addEventListener("click", () => lbGo(i));
-      dotsEl.appendChild(dot);
-    });
-  }
-  lbGo(lbIndex);
-  document.getElementById("lightbox").classList.add("active");
-  document.body.style.overflow = "hidden";
-}
-
-function lbGo(index) {
-  if (index < 0 || index >= lbImages.length) return;
-  lbIndex = index;
-  document.getElementById("lbImg").src = lbImages[lbIndex];
-  document.getElementById("lbPrev").classList.toggle("hidden", lbIndex === 0);
-  document.getElementById("lbNext").classList.toggle("hidden", lbIndex === lbImages.length - 1);
-  document.querySelectorAll(".lightbox-dot").forEach((d, i) => {
-    d.classList.toggle("active", i === lbIndex);
-  });
-}
-
-function closeLightbox() {
-  document.getElementById("lightbox").classList.remove("active");
-  document.body.style.overflow = "";
-}
-
-// ================================
-//  PURCHASE MODAL
-// ================================
-const EMAIL = "${EMAIL}";
-const IG_URL = "${IG_URL}";
-
-function buildModal() {
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.id = "purchaseModal";
-  overlay.innerHTML = \`
-    <div class="modal">
-      <p class="modal-title">Purchase</p>
-      <p class="modal-product" id="modalProduct"></p>
-      <p class="modal-meta" id="modalMeta"></p>
-      <p class="modal-prompt">Please select a contact method to purchase this product.</p>
-      <p class="modal-prompt" id="modalPrompt">Please select a contact method to purchase this product.</p>
-      <div class="modal-buttons">
-        <a id="modalStripe" href="#" target="_blank" class="modal-btn modal-btn-stripe" style="display:none;">
-          <svg viewBox="0 0 24 24"><path d="M21 4H3C1.9 4 1 4.9 1 6v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V6h18v12z"/><path d="M5 10h3v4H5z"/></svg>
-          Buy Now — Secure Checkout
-        </a>
-        <div id="modalContactDivider" class="modal-divider" style="display:none;"><span>or contact us here</span></div>
-        <div class="modal-socials">
-          <a id="modalIG" href="\${IG_URL}" target="_blank" class="modal-social-btn" aria-label="Instagram DM">
-            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2"/></svg>
-            Instagram DM
-          </a>
-          <a id="modalEmail" href="#" class="modal-social-btn" aria-label="Email">
-            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            Email
-          </a>
-        </div>
-      </div>
-      <button class="modal-close" id="modalClose">Cancel</button>
-    </div>
-  \`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
-  document.getElementById("modalClose").addEventListener("click", closeModal);
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
-}
-
-function openModal(btn) {
-  const name = btn.dataset.name;
-  const meta = btn.dataset.meta;
-  const price = btn.dataset.price;
-  const stripeLink = btn.dataset.stripe;
-  document.getElementById("modalProduct").textContent = name;
-  document.getElementById("modalMeta").textContent = meta + "  ·  " + price;
-  const subject = encodeURIComponent("Inquiry: " + name + (meta ? " - " + meta : ""));
-  const body = encodeURIComponent("Hey Drew, is this still available?\\n\\n" + name + (meta ? "\\n" + meta : "") + "\\n\\nAsking price: " + price);
-  document.getElementById("modalEmail").href = "mailto:" + EMAIL + "?subject=" + subject + "&body=" + body;
-  const stripeBtn = document.getElementById("modalStripe");
-  const divider = document.getElementById("modalContactDivider");
-  const prompt = document.getElementById("modalPrompt");
-  if (stripeLink) {
-    stripeBtn.href = stripeLink;
-    stripeBtn.style.display = "flex";
-    divider.style.display = "flex";
-    prompt.style.display = "none";
-  } else {
-    stripeBtn.style.display = "none";
-    divider.style.display = "none";
-    prompt.style.display = "block";
-  }
-  document.getElementById("purchaseModal").classList.add("active");
-  document.body.style.overflow = "hidden";
-}
-
-function closeModal() {
-  document.getElementById("purchaseModal").classList.remove("active");
-  document.body.style.overflow = "";
-}
-
-// ================================
-//  RENDER FUNCTION
-// ================================
-function renderGrid(gridId, items, countId) {
-  const grid = document.getElementById(gridId);
-  if (!grid) return;
-  const countEl = document.getElementById(countId);
-  const available = items.filter(i => i.status !== "sold").length;
-  if (countEl) countEl.textContent = available + " available";
-  if (items.length === 0) {
-    grid.innerHTML = '<p style="color:#888; font-size:14px; grid-column:1/-1; padding: 40px 0;">No listings yet — check back soon.</p>';
-    return;
-  }
-  items.forEach(item => {
-    const isSold = item.status === "sold";
-    const displayMeta = item.meta || (item.size ? "Size US " + item.size : "");
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML =
-      '<div class="img-wrap">' +
-        '<img src="' + item.image + '" alt="' + item.name + '" loading="lazy">' +
-        '<div class="badge ' + (isSold ? "sold" : "available") + '">' + (isSold ? "Sold" : "Available") + '</div>' +
-      '</div>' +
-      '<div class="card-body">' +
-        '<p class="card-name">' + item.name + '</p>' +
-        '<div class="card-meta-row"><span class="card-meta">' + displayMeta + '</span></div>' +
-      '</div>' +
-      '<div class="card-footer">' +
-        '<span class="price">' + item.price + '</span>' +
-        (isSold ? '<button class="btn disabled" disabled>Sold Out</button>' : '<button class="btn available purchase-btn">Purchase</button>') +
-      '</div>';
-    const imgWrap = card.querySelector(".img-wrap");
-    imgWrap.addEventListener("click", function() { openLightbox(item, 0); });
-    if (!isSold) {
-      const btn = card.querySelector(".purchase-btn");
-      btn.dataset.name = item.name;
-      btn.dataset.meta = displayMeta;
-      btn.dataset.price = item.price;
-      btn.dataset.stripe = item.stripeLink || "";
-      btn.addEventListener("click", function(e) { e.stopPropagation(); openModal(this); });
-    }
-    grid.appendChild(card);
-  });
-}
-
-// ================================
-//  INIT
-// ================================
-document.addEventListener("DOMContentLoaded", function() {
-  buildLightbox();
-  buildModal();
-  const seenShoes = [];
-  const uniqueShoes = shoes.filter(s => {
-    if (seenShoes.includes(s.name)) return false;
-    seenShoes.push(s.name);
-    return true;
-  }).slice(0, 4);
-  renderGrid("shoeGrid", uniqueShoes, null);
-  renderGrid("streetwearGridHome", streetwear.slice(0, 4), null);
-  renderGrid("cardsGridHome", cards.slice(0, 4), null);
-  renderGrid("sneakerGrid", shoes, "sneakerCount");
-  renderGrid("streetwearGrid", streetwear, "streetwearCount");
-  renderGrid("cardsGrid", cards, "cardsCount");
-});
-`;
-
-  const blob = new Blob([js], { type: "text/javascript" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "main.js";
-  a.click();
-  showToast("main.js downloaded!");
 }
 
 // ================================
@@ -667,25 +498,43 @@ function closeEdit(i) {
   document.getElementById("row-" + i).style.borderBottomRightRadius = "";
 }
 
-function saveEdit(i) {
+async function saveEdit(i) {
   const item = data[currentTab][i];
-  item.name = document.getElementById("edit-name-" + i).value.trim();
-  item.price = document.getElementById("edit-price-" + i).value.trim();
-  item.image = document.getElementById("edit-image-" + i).value.trim();
-  item.images = item.image ? [item.image] : [];
+  const name = document.getElementById("edit-name-" + i).value.trim();
+  const price = document.getElementById("edit-price-" + i).value.trim();
+  const image = document.getElementById("edit-image-" + i).value.trim();
   const stripeVal = document.getElementById("edit-stripe-" + i).value.trim();
-  if (stripeVal) item.stripeLink = stripeVal;
-  else delete item.stripeLink;
+  const stock = parseInt(document.getElementById("edit-stock-" + i).value) || 0;
+
+  const payload = {
+    name, price, image,
+    images: JSON.stringify(image ? [image] : []),
+    stripe_link: stripeVal || null,
+    stock,
+    status: stock <= 0 ? "sold" : item.status
+  };
 
   if (currentTab === "sneakers") {
-    item.size = parseFloat(document.getElementById("edit-size-" + i).value) || item.size;
+    payload.size = parseFloat(document.getElementById("edit-size-" + i).value) || item.size;
   } else {
-    item.meta = document.getElementById("edit-meta-" + i).value.trim();
+    payload.meta = document.getElementById("edit-meta-" + i).value.trim();
   }
 
-  save();
-  renderList();
-  showToast("Product updated!");
+  try {
+    await sbFetch(`/rest/v1/products?id=eq.${item.id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload)
+    });
+    Object.assign(item, { name, price, image, images: [image], stripeLink: stripeVal || null, stock, status: payload.status });
+    if (payload.size) item.size = payload.size;
+    if (payload.meta !== undefined) item.meta = payload.meta;
+    closeEdit(i);
+    renderList();
+    showToast("Product updated!");
+  } catch(e) {
+    showToast("Failed to save changes");
+    console.error(e);
+  }
 }
 
 // ================================
@@ -701,7 +550,7 @@ function showToast(msg) {
 // ================================
 //  INIT
 // ================================
-renderList();
+loadProducts();
 </script>
 </body>
 </html>
