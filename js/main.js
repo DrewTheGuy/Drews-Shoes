@@ -10,7 +10,8 @@ const shoes = [
     "image": "images/products/mind-001-IR2175-200.jpg",
     "images": [
       "images/products/mind-001-IR2175-200.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/00w5kF8ToeWfcou5007IY00"
   },
   {
     "name": "Nike Mind 001 Flyknit \"Bronze Eclipse / Total Orange\"",
@@ -20,7 +21,8 @@ const shoes = [
     "image": "images/products/mind-001-IR2175-200.jpg",
     "images": [
       "images/products/mind-001-IR2175-200.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/fZu6oJ8To01lfAG9gg7IY01"
   },
   {
     "name": "Air Jordan 3 PRM \"BIN23\"",
@@ -30,7 +32,8 @@ const shoes = [
     "image": "images/products/jordan-3-bin23-IO7744-600.jpg",
     "images": [
       "images/products/jordan-3-bin23-IO7744-600.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/5kQ9AV8To29tgEK1NO7IY02"
   },
   {
     "name": "Nike Kobe 5 Protro \"Caitlin Clark Rookie of the Year\"",
@@ -40,7 +43,8 @@ const shoes = [
     "image": "images/products/kobe-5-IV2712-001.jpg",
     "images": [
       "images/products/kobe-5-IV2712-001.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/7sY00l6Lg9BVagm3VW7IY03"
   },
   {
     "name": "Nike Kobe 5 Protro \"Caitlin Clark Rookie of the Year\"",
@@ -50,7 +54,8 @@ const shoes = [
     "image": "images/products/kobe-5-IV2712-001.jpg",
     "images": [
       "images/products/kobe-5-IV2712-001.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/eVq6oJ6LgcO71JQgII7IY04"
   },
   {
     "name": "Nike Air Jordan 17 \"Doernbecher Freestyle\"",
@@ -60,7 +65,8 @@ const shoes = [
     "image": "images/products/aj17-dorenbecher-IO7684-921.jpg",
     "images": [
       "images/products/aj17-dorenbecher-IO7684-921.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/cNi7sNfhM15p3RYeAA7IY05"
   }
 ];
 
@@ -76,7 +82,8 @@ const streetwear = [
     "image": "images/products/supreme-ushanka.jpg",
     "images": [
       "images/products/supreme-ushanka.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/bJeeVf6Lg6pJgEK2RS7IY06"
   }
 ];
 
@@ -92,9 +99,12 @@ const cards = [
     "image": "images/products/topps-hoops-hobby.jpg",
     "images": [
       "images/products/topps-hoops-hobby.jpg"
-    ]
+    ],
+    "stripeLink": "https://buy.stripe.com/5kQ14p0mS15pbkqboo7IY07"
   }
 ];
+
+// ##PRODUCT_DATA_END##
 
 // ================================
 //  LIGHTBOX
@@ -186,16 +196,23 @@ function buildModal() {
       <p class="modal-title">Purchase</p>
       <p class="modal-product" id="modalProduct"></p>
       <p class="modal-meta" id="modalMeta"></p>
-      <p class="modal-prompt">Please select a contact method to purchase this product.</p>
+      <p class="modal-prompt" id="modalPrompt">Please select a contact method to purchase this product.</p>
       <div class="modal-buttons">
-        <a id="modalIG" href="${IG_URL}" target="_blank" class="modal-btn modal-btn-ig">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2"/></svg>
-          Instagram DM
+        <a id="modalStripe" href="#" target="_blank" class="modal-btn modal-btn-stripe" style="display:none;">
+          <svg viewBox="0 0 24 24"><path d="M21 4H3C1.9 4 1 4.9 1 6v12c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H3V6h18v12z"/><path d="M5 10h3v4H5z"/></svg>
+          Buy Now — Secure Checkout
         </a>
-        <a id="modalEmail" href="#" class="modal-btn modal-btn-email">
-          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          Email
-        </a>
+        <div id="modalContactDivider" class="modal-divider" style="display:none;"><span>or contact us here</span></div>
+        <div class="modal-socials">
+          <a id="modalIG" href="${IG_URL}" target="_blank" class="modal-social-btn" aria-label="Instagram DM">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2"/></svg>
+            Instagram DM
+          </a>
+          <a id="modalEmail" href="#" class="modal-social-btn" aria-label="Email">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email
+          </a>
+        </div>
       </div>
       <button class="modal-close" id="modalClose">Cancel</button>
     </div>
@@ -210,11 +227,25 @@ function openModal(btn) {
   const name = btn.dataset.name;
   const meta = btn.dataset.meta;
   const price = btn.dataset.price;
+  const stripeLink = btn.dataset.stripe;
   document.getElementById("modalProduct").textContent = name;
   document.getElementById("modalMeta").textContent = meta + "  ·  " + price;
   const subject = encodeURIComponent("Inquiry: " + name + (meta ? " - " + meta : ""));
   const body = encodeURIComponent("Hey Drew, is this still available?\n\n" + name + (meta ? "\n" + meta : "") + "\n\nAsking price: " + price);
   document.getElementById("modalEmail").href = "mailto:" + EMAIL + "?subject=" + subject + "&body=" + body;
+  const stripeBtn = document.getElementById("modalStripe");
+  const divider = document.getElementById("modalContactDivider");
+  const prompt = document.getElementById("modalPrompt");
+  if (stripeLink) {
+    stripeBtn.href = stripeLink;
+    stripeBtn.style.display = "flex";
+    divider.style.display = "flex";
+    prompt.style.display = "none";
+  } else {
+    stripeBtn.style.display = "none";
+    divider.style.display = "none";
+    prompt.style.display = "block";
+  }
   document.getElementById("purchaseModal").classList.add("active");
   document.body.style.overflow = "hidden";
 }
@@ -262,6 +293,7 @@ function renderGrid(gridId, items, countId) {
       btn.dataset.name = item.name;
       btn.dataset.meta = displayMeta;
       btn.dataset.price = item.price;
+      btn.dataset.stripe = item.stripeLink || "";
       btn.addEventListener("click", function(e) { e.stopPropagation(); openModal(this); });
     }
     grid.appendChild(card);
