@@ -3,65 +3,72 @@
 // ================================
 const shoes = [
   {
-    name: 'Nike Mind 001 Flyknit "Bronze Eclipse / Total Orange"',
-    size: 7,
-    price: "$155",
-    status: "in-stock",
-    image: "images/products/mind-001-IR2175-200.jpg",
-    images: [
-      "images/products/mind-001-IR2175-200.jpg"
-      // Add more angles: "images/products/mind-001-7-side.jpg", "images/products/mind-001-7-sole.jpg"
-    ]
-  },
-  {
-    name: 'Nike Mind 001 Flyknit "Bronze Eclipse / Total Orange"',
-    size: 15,
-    price: "$280",
-    status: "in-stock",
-    image: "images/products/mind-001-IR2175-200.jpg",
-    images: [
+    "name": "Nike Mind 001 Flyknit \"Bronze Eclipse / Total Orange\"",
+    "size": 7,
+    "price": "$155",
+    "status": "in-stock",
+    "image": "images/products/mind-001-IR2175-200.jpg",
+    "images": [
       "images/products/mind-001-IR2175-200.jpg"
     ]
   },
   {
-    name: 'Air Jordan 3 PRM "BIN23"',
-    size: 9,
-    price: "$650",
-    status: "in-stock",
-    image: "images/products/jordan-3-bin23-IO7744-600.jpg",
-    images: [
+    "name": "Nike Mind 001 Flyknit \"Bronze Eclipse / Total Orange\"",
+    "size": 15,
+    "price": "$280",
+    "status": "in-stock",
+    "image": "images/products/mind-001-IR2175-200.jpg",
+    "images": [
+      "images/products/mind-001-IR2175-200.jpg"
+    ]
+  },
+  {
+    "name": "Air Jordan 3 PRM \"BIN23\"",
+    "size": 9,
+    "price": "$650",
+    "status": "in-stock",
+    "image": "images/products/jordan-3-bin23-IO7744-600.jpg",
+    "images": [
       "images/products/jordan-3-bin23-IO7744-600.jpg"
     ]
   },
   {
-    name: 'Nike Kobe 5 Protro "Caitlin Clark Rookie of the Year"',
-    size: 9.5,
-    price: "$240",
-    status: "in-stock",
-    image: "images/products/kobe-5-IV2712-001.jpg",
-    images: [
+    "name": "Nike Kobe 5 Protro \"Caitlin Clark Rookie of the Year\"",
+    "size": 9.5,
+    "price": "$240",
+    "status": "in-stock",
+    "image": "images/products/kobe-5-IV2712-001.jpg",
+    "images": [
       "images/products/kobe-5-IV2712-001.jpg"
     ]
   },
   {
-    name: 'Nike Kobe 5 Protro "Caitlin Clark Rookie of the Year"',
-    size: 11.5,
-    price: "$240",
-    status: "in-stock",
-    image: "images/products/kobe-5-IV2712-001.jpg",
-    images: [
+    "name": "Nike Kobe 5 Protro \"Caitlin Clark Rookie of the Year\"",
+    "size": 11.5,
+    "price": "$240",
+    "status": "in-stock",
+    "image": "images/products/kobe-5-IV2712-001.jpg",
+    "images": [
       "images/products/kobe-5-IV2712-001.jpg"
     ]
   },
   {
-    name: 'Nike Air Jordan 17 "Doernbecher Freestyle"',
-    size: 10,
-    price: "$295",
-    status: "in-stock",
-    image: "images/products/aj17-dorenbecher-IO7684-921.jpg",
-    images: [
+    "name": "Nike Air Jordan 17 \"Doernbecher Freestyle\"",
+    "size": 10,
+    "price": "$295",
+    "status": "in-stock",
+    "image": "images/products/aj17-dorenbecher-IO7684-921.jpg",
+    "images": [
       "images/products/aj17-dorenbecher-IO7684-921.jpg"
     ]
+  },
+  {
+    "name": "sss",
+    "price": "$247",
+    "status": "in-stock",
+    "image": "",
+    "images": [],
+    "size": 12
   }
 ];
 
@@ -70,12 +77,12 @@ const shoes = [
 // ================================
 const streetwear = [
   {
-    name: "Supreme Ushanka Hat",
-    meta: "S/M",
-    price: "$100",
-    status: "in-stock",
-    image: "images/products/supreme-ushanka.jpg",
-    images: [
+    "name": "Supreme Ushanka Hat",
+    "meta": "S/M",
+    "price": "$100",
+    "status": "in-stock",
+    "image": "images/products/supreme-ushanka.jpg",
+    "images": [
       "images/products/supreme-ushanka.jpg"
     ]
   }
@@ -86,12 +93,12 @@ const streetwear = [
 // ================================
 const cards = [
   {
-    name: "Topps 2025-26 NBA Hoops",
-    meta: "Hobby Box",
-    price: "$230",
-    status: "in-stock",
-    image: "images/products/topps-hoops-hobby.jpg",
-    images: [
+    "name": "Topps 2025-26 NBA Hoops",
+    "meta": "Hobby Box",
+    "price": "$230",
+    "status": "in-stock",
+    "image": "images/products/topps-hoops-hobby.jpg",
+    "images": [
       "images/products/topps-hoops-hobby.jpg"
     ]
   }
@@ -123,7 +130,6 @@ function buildLightbox() {
     </div>
   `;
   document.body.appendChild(lb);
-
   document.getElementById("lbClose").addEventListener("click", closeLightbox);
   lb.addEventListener("click", (e) => { if (e.target === lb) closeLightbox(); });
   document.getElementById("lbPrev").addEventListener("click", (e) => { e.stopPropagation(); lbGo(lbIndex - 1); });
@@ -140,11 +146,8 @@ function openLightbox(item, startIndex) {
   lbImages = item.images && item.images.length ? item.images : [item.image];
   lbIndex = startIndex || 0;
   const displayMeta = item.meta || (item.size ? "Size US " + item.size : "");
-
   document.getElementById("lbName").textContent = item.name;
   document.getElementById("lbMeta").textContent = displayMeta + "  ·  " + item.price;
-
-  // Build dots
   const dotsEl = document.getElementById("lbDots");
   dotsEl.innerHTML = "";
   if (lbImages.length > 1) {
@@ -155,7 +158,6 @@ function openLightbox(item, startIndex) {
       dotsEl.appendChild(dot);
     });
   }
-
   lbGo(lbIndex);
   document.getElementById("lightbox").classList.add("active");
   document.body.style.overflow = "hidden";
@@ -207,7 +209,6 @@ function buildModal() {
     </div>
   `;
   document.body.appendChild(overlay);
-
   overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
   document.getElementById("modalClose").addEventListener("click", closeModal);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
@@ -217,14 +218,11 @@ function openModal(btn) {
   const name = btn.dataset.name;
   const meta = btn.dataset.meta;
   const price = btn.dataset.price;
-
   document.getElementById("modalProduct").textContent = name;
   document.getElementById("modalMeta").textContent = meta + "  ·  " + price;
-
   const subject = encodeURIComponent("Inquiry: " + name + (meta ? " - " + meta : ""));
   const body = encodeURIComponent("Hey Drew, is this still available?\n\n" + name + (meta ? "\n" + meta : "") + "\n\nAsking price: " + price);
   document.getElementById("modalEmail").href = "mailto:" + EMAIL + "?subject=" + subject + "&body=" + body;
-
   document.getElementById("purchaseModal").classList.add("active");
   document.body.style.overflow = "hidden";
 }
@@ -240,20 +238,16 @@ function closeModal() {
 function renderGrid(gridId, items, countId) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
-
   const countEl = document.getElementById(countId);
   const available = items.filter(i => i.status !== "sold").length;
   if (countEl) countEl.textContent = available + " available";
-
   if (items.length === 0) {
     grid.innerHTML = '<p style="color:#888; font-size:14px; grid-column:1/-1; padding: 40px 0;">No listings yet — check back soon.</p>';
     return;
   }
-
   items.forEach(item => {
     const isSold = item.status === "sold";
     const displayMeta = item.meta || (item.size ? "Size US " + item.size : "");
-
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML =
@@ -267,27 +261,17 @@ function renderGrid(gridId, items, countId) {
       '</div>' +
       '<div class="card-footer">' +
         '<span class="price">' + item.price + '</span>' +
-        (isSold
-          ? '<button class="btn disabled" disabled>Sold Out</button>'
-          : '<button class="btn available purchase-btn">Purchase</button>') +
+        (isSold ? '<button class="btn disabled" disabled>Sold Out</button>' : '<button class="btn available purchase-btn">Purchase</button>') +
       '</div>';
-
-    // Lightbox on image click
     const imgWrap = card.querySelector(".img-wrap");
     imgWrap.addEventListener("click", function() { openLightbox(item, 0); });
-
-    // Purchase modal on button click
     if (!isSold) {
       const btn = card.querySelector(".purchase-btn");
       btn.dataset.name = item.name;
       btn.dataset.meta = displayMeta;
       btn.dataset.price = item.price;
-      btn.addEventListener("click", function(e) {
-        e.stopPropagation();
-        openModal(this);
-      });
+      btn.addEventListener("click", function(e) { e.stopPropagation(); openModal(this); });
     }
-
     grid.appendChild(card);
   });
 }
@@ -298,8 +282,6 @@ function renderGrid(gridId, items, countId) {
 document.addEventListener("DOMContentLoaded", function() {
   buildLightbox();
   buildModal();
-
-  // Homepage — show unique products only (first size listed), up to 4
   const seenShoes = [];
   const uniqueShoes = shoes.filter(s => {
     if (seenShoes.includes(s.name)) return false;
@@ -309,8 +291,6 @@ document.addEventListener("DOMContentLoaded", function() {
   renderGrid("shoeGrid", uniqueShoes, null);
   renderGrid("streetwearGridHome", streetwear.slice(0, 4), null);
   renderGrid("cardsGridHome", cards.slice(0, 4), null);
-
-  // Category pages — full inventory
   renderGrid("sneakerGrid", shoes, "sneakerCount");
   renderGrid("streetwearGrid", streetwear, "streetwearCount");
   renderGrid("cardsGrid", cards, "cardsCount");
