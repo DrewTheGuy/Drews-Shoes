@@ -1,112 +1,34 @@
 const SUPABASE_URL = "https://jnxobqrlpdtpsumnwvde.supabase.co";
 const SUPABASE_KEY = "sb_publishable_UK_x5tuLJIntL4-EFqCqKA_bx-3QXdT";
-// ================================
-//  SNEAKERS — add items here
-// ================================
-const shoes = [
-  {
-    "name": "Nike Mind 001 Flyknit \"Bronze Eclipse / Total Orange\"",
-    "size": 7,
-    "price": "$155",
-    "status": "in-stock",
-    "image": "images/products/mind-001-IR2175-200.jpg",
-    "images": [
-      "images/products/mind-001-IR2175-200.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/00w5kF8ToeWfcou5007IY00"
-  },
-  {
-    "name": "Nike Mind 001 Flyknit \"Bronze Eclipse / Total Orange\"",
-    "size": 15,
-    "price": "$280",
-    "status": "in-stock",
-    "image": "images/products/mind-001-IR2175-200.jpg",
-    "images": [
-      "images/products/mind-001-IR2175-200.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/fZu6oJ8To01lfAG9gg7IY01"
-  },
-  {
-    "name": "Air Jordan 3 PRM \"BIN23\"",
-    "size": 9,
-    "price": "$650",
-    "status": "in-stock",
-    "image": "images/products/jordan-3-bin23-IO7744-600.jpg",
-    "images": [
-      "images/products/jordan-3-bin23-IO7744-600.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/5kQ9AV8To29tgEK1NO7IY02"
-  },
-  {
-    "name": "Nike Kobe 5 Protro \"Caitlin Clark Rookie of the Year\"",
-    "size": 9.5,
-    "price": "$240",
-    "status": "in-stock",
-    "image": "images/products/kobe-5-IV2712-001.jpg",
-    "images": [
-      "images/products/kobe-5-IV2712-001.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/7sY00l6Lg9BVagm3VW7IY03"
-  },
-  {
-    "name": "Nike Kobe 5 Protro \"Caitlin Clark Rookie of the Year\"",
-    "size": 11.5,
-    "price": "$240",
-    "status": "in-stock",
-    "image": "images/products/kobe-5-IV2712-001.jpg",
-    "images": [
-      "images/products/kobe-5-IV2712-001.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/eVq6oJ6LgcO71JQgII7IY04"
-  },
-  {
-    "name": "Nike Air Jordan 17 \"Doernbecher Freestyle\"",
-    "size": 10,
-    "price": "$295",
-    "status": "in-stock",
-    "image": "images/products/aj17-dorenbecher-IO7684-921.jpg",
-    "images": [
-      "images/products/aj17-dorenbecher-IO7684-921.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/cNi7sNfhM15p3RYeAA7IY05"
-  }
-];
 
 // ================================
-//  STREETWEAR — add items here
+//  SUPABASE FETCH
 // ================================
-const streetwear = [
-  {
-    "name": "Supreme Ushanka Hat",
-    "meta": "S/M",
-    "price": "$100",
-    "status": "in-stock",
-    "image": "images/products/supreme-ushanka.jpg",
-    "images": [
-      "images/products/supreme-ushanka.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/bJeeVf6Lg6pJgEK2RS7IY06"
-  }
-];
+async function fetchProducts() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=id`, {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`
+    }
+  });
+  if (!res.ok) throw new Error("Failed to fetch products");
+  const rows = await res.json();
 
-// ================================
-//  TRADING CARDS — add items here
-// ================================
-const cards = [
-  {
-    "name": "Topps 2025-26 NBA Hoops",
-    "meta": "Hobby Box",
-    "price": "$230",
-    "status": "in-stock",
-    "image": "images/products/topps-hoops-hobby.jpg",
-    "images": [
-      "images/products/topps-hoops-hobby.jpg"
-    ],
-    "stripeLink": "https://buy.stripe.com/5kQ14p0mS15pbkqboo7IY07"
-  }
-];
-
-// ##PRODUCT_DATA_END##
+  // Normalize rows to match existing item shape
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    category: r.category,
+    size: r.size,
+    meta: r.meta,
+    price: r.price,
+    status: r.stock <= 0 ? "sold" : r.status,
+    image: r.image,
+    images: (() => { try { return JSON.parse(r.images); } catch(e) { return [r.image]; } })(),
+    stripeLink: r.stripe_link,
+    stock: r.stock
+  }));
+}
 
 // ================================
 //  LIGHTBOX
@@ -286,7 +208,7 @@ function renderGrid(gridId, items, countId) {
       '</div>' +
       '<div class="card-footer">' +
         '<span class="price">' + item.price + '</span>' +
-        (isSold ? '<button class="btn disabled" disabled>Sold Out</button>' : '<button class="btn available purchase-btn">Purchase</button>') +
+        (isSold ? '<button class="btn disabled" disabled>Out of Stock</button>' : '<button class="btn available purchase-btn">Purchase</button>') +
       '</div>';
     const imgWrap = card.querySelector(".img-wrap");
     imgWrap.addEventListener("click", function() { openLightbox(item, 0); });
@@ -305,15 +227,28 @@ function renderGrid(gridId, items, countId) {
 // ================================
 //  INIT
 // ================================
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
   buildLightbox();
   buildModal();
+
+  let allProducts = [];
+  try {
+    allProducts = await fetchProducts();
+  } catch(e) {
+    console.error("Could not load products from Supabase:", e);
+  }
+
+  const shoes = allProducts.filter(p => p.category === "sneakers");
+  const streetwear = allProducts.filter(p => p.category === "streetwear");
+  const cards = allProducts.filter(p => p.category === "cards");
+
   const seenShoes = [];
   const uniqueShoes = shoes.filter(s => {
     if (seenShoes.includes(s.name)) return false;
     seenShoes.push(s.name);
     return true;
   }).slice(0, 4);
+
   renderGrid("shoeGrid", uniqueShoes, null);
   renderGrid("streetwearGridHome", streetwear.slice(0, 4), null);
   renderGrid("cardsGridHome", cards.slice(0, 4), null);
