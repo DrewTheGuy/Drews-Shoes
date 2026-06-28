@@ -126,6 +126,20 @@
     }
     .toast.show { opacity: 1; }
 
+    .btn-edit {
+      padding: 5px 10px; border-radius: 6px; border: 1px solid #ddd;
+      background: #fff; color: #555; cursor: pointer;
+      font-size: 10px; font-weight: 700; font-family: 'Manrope', sans-serif;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .btn-edit:hover { color: #111; border-color: #111; }
+
+    .edit-form {
+      background: #f9f9f9; border: 1px solid #e0e0e0;
+      border-radius: 12px; padding: 20px;
+      margin-top: -6px; margin-bottom: 4px;
+    }
+
     @media (max-width: 600px) {
       .form-grid { grid-template-columns: 1fr; }
       .export-card { flex-direction: column; }
@@ -314,8 +328,9 @@ function renderList() {
   list.innerHTML = items.map((item, i) => {
     const meta = item.meta || (item.size ? "Size US " + item.size : "");
     const isSold = item.status === "sold";
+    const isSneaker = currentTab === "sneakers";
     return `
-      <div class="product-row">
+      <div class="product-row" id="row-${i}">
         <img class="product-thumb" src="${item.image}" onerror="this.src=''" alt="${item.name}">
         <div class="product-info">
           <div class="product-name">${item.name}</div>
@@ -326,7 +341,37 @@ function renderList() {
           <button class="btn-status ${isSold ? 'sold' : 'in-stock'}" onclick="toggleStatus(${i})">
             ${isSold ? 'Sold' : 'In Stock'}
           </button>
+          <button class="btn-edit" onclick="openEdit(${i})">Edit</button>
           <button class="btn-delete" onclick="deleteProduct(${i})">Remove</button>
+        </div>
+      </div>
+      <div class="edit-form" id="edit-${i}" style="display:none;">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Product Name</label>
+            <input type="text" id="edit-name-${i}" value="${item.name.replace(/"/g, '&quot;')}">
+          </div>
+          ${isSneaker ? `
+          <div class="form-group">
+            <label>Size (US)</label>
+            <input type="number" id="edit-size-${i}" step="0.5" value="${item.size || ''}">
+          </div>` : `
+          <div class="form-group">
+            <label>Size / Description</label>
+            <input type="text" id="edit-meta-${i}" value="${(item.meta || '').replace(/"/g, '&quot;')}">
+          </div>`}
+          <div class="form-group">
+            <label>Price</label>
+            <input type="text" id="edit-price-${i}" value="${item.price}">
+          </div>
+          <div class="form-group full">
+            <label>Image Path or URL</label>
+            <input type="text" id="edit-image-${i}" value="${item.image}">
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button class="btn-add" style="margin-top:0;" onclick="saveEdit(${i})">Save Changes</button>
+          <button class="btn-delete" style="padding:10px 16px;" onclick="closeEdit(${i})">Cancel</button>
         </div>
       </div>
     `;
@@ -579,6 +624,39 @@ document.addEventListener("DOMContentLoaded", function() {
   a.download = "main.js";
   a.click();
   showToast("main.js downloaded!");
+}
+
+// ================================
+//  EDIT PRODUCT
+// ================================
+function openEdit(i) {
+  document.getElementById("edit-" + i).style.display = "block";
+  document.getElementById("row-" + i).style.borderBottomLeftRadius = "0";
+  document.getElementById("row-" + i).style.borderBottomRightRadius = "0";
+}
+
+function closeEdit(i) {
+  document.getElementById("edit-" + i).style.display = "none";
+  document.getElementById("row-" + i).style.borderBottomLeftRadius = "";
+  document.getElementById("row-" + i).style.borderBottomRightRadius = "";
+}
+
+function saveEdit(i) {
+  const item = data[currentTab][i];
+  item.name = document.getElementById("edit-name-" + i).value.trim();
+  item.price = document.getElementById("edit-price-" + i).value.trim();
+  item.image = document.getElementById("edit-image-" + i).value.trim();
+  item.images = item.image ? [item.image] : [];
+
+  if (currentTab === "sneakers") {
+    item.size = parseFloat(document.getElementById("edit-size-" + i).value) || item.size;
+  } else {
+    item.meta = document.getElementById("edit-meta-" + i).value.trim();
+  }
+
+  save();
+  renderList();
+  showToast("Product updated!");
 }
 
 // ================================
