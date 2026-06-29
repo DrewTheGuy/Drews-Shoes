@@ -22,7 +22,7 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Manrope', sans-serif;
-  background: var(--bg);
+  background: #111;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -34,6 +34,7 @@ body {
 
 .container-wrapper {
   flex: 1;
+  background: var(--bg);
 }
 
 /* =========================
