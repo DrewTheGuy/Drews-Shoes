@@ -650,6 +650,7 @@ async function toggleStatus(i) {
   }
 }
 
+
 async function deleteProduct(i) {
   showConfirm("Permanently remove this product?", async () => {
     const item = data[currentCategory][i];
@@ -808,8 +809,10 @@ async function loadStats() {
     const allProducts = Object.values(data).flat();
     const total = allProducts.length;
     const available = allProducts.filter(p => p.status !== "sold" && p.stock > 0).length;
-    const sold = total - available;
-    document.getElementById("statTotal").textContent = total;
+    // Count sold from sold_archive since sold items are removed from products
+    const soldRows = await sbFetch("/rest/v1/sold_archive?select=id");
+    const sold = soldRows.length;
+    document.getElementById("statTotal").textContent = total + sold;
     document.getElementById("statAvailable").textContent = available;
     document.getElementById("statSold").textContent = sold;
     document.getElementById("statSneakers").textContent = (data.sneakers || []).length;
@@ -880,7 +883,7 @@ function renderArchive() {
     return;
   }
 
-  list.innerHTML = filtered.map(s => {
+  list.innerHTML = filtered.map((s, i) => {
     const meta = s.meta || (s.size ? "Size US " + s.size : "");
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
