@@ -619,33 +619,30 @@ async function toggleStatus(i) {
   const isSold = item.status !== "sold" && item.stock > 0 ? false : true;
 
   if (!isSold) {
-    // Mark as sold — archive it and remove from products
     showConfirm(`Mark "${item.name}" as sold and move it to the Sold Archive?`, async () => {
-      // Archive first
-      const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
-      if (!existing.length) {
-        await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
-          product_id: item.id,
-          name: item.name,
-          category: item.category,
-          size: item.size || null,
-          meta: item.meta || null,
-          price: item.price,
-          sold_for: null,
-          image: item.image,
-          stripe_link: item.stripeLink || null,
-          sold_at: new Date().toISOString()
-        })});
-      }
-      // Delete from products
-      await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
-      data[currentCategory].splice(i, 1);
-      renderList();
-      showToast("Moved to Sold Archive!");
-    } catch(e) { showToast("Failed to mark sold"); console.error(e); }
+      try {
+        const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
+        if (!existing.length) {
+          await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
+            product_id: item.id,
+            name: item.name,
+            category: item.category,
+            size: item.size || null,
+            meta: item.meta || null,
+            price: item.price,
+            sold_for: null,
+            image: item.image,
+            stripe_link: item.stripeLink || null,
+            sold_at: new Date().toISOString()
+          })});
+        }
+        await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
+        data[currentCategory].splice(i, 1);
+        renderList();
+        showToast("Moved to Sold Archive!");
+      } catch(e) { showToast("Failed to mark sold"); console.error(e); }
     });
   } else {
-    // Toggle back to in-stock without relisting (shouldn't normally happen from products tab now)
     try {
       await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "PATCH", body: JSON.stringify({ status: "in-stock", stock: 1 }) });
       item.status = "in-stock"; item.stock = 1; renderList(); showToast("Status updated");
@@ -896,7 +893,7 @@ function renderArchive() {
           <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
         <div class="product-actions">
-          <button class="btn-edit" onclick='openRelistModal(${JSON.stringify(s).replace(/"/g, "&quot;")})'>Relist</button>
+          <button class="btn-edit" onclick="openRelistModal(${i})">Relist</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
       </div>`;
@@ -935,7 +932,9 @@ async function deleteArchiveItem(id) {
 }
 
 // RELIST MODAL
-function openRelistModal(item) {
+function openRelistModal(index) {
+  const item = archiveData.filter(s => archiveFilter === "all" || s.category === archiveFilter)[index];
+  if (!item) return;
   document.getElementById("relistId").value = item.id;
   document.getElementById("relistName").value = item.name;
   document.getElementById("relistCategory").value = item.category;
