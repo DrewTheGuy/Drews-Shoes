@@ -53,8 +53,9 @@ function applySettings(s) {
     const banner = document.createElement("div");
     banner.id = "siteBanner";
     banner.textContent = s.banner_text;
+    const hex = s.banner_color || '#111';
     banner.style.cssText = `
-      background: ${s.banner_color || '#111'};
+      background: ${hex}ee;
       color: ${s.banner_text_color || '#fff'};
       text-align: center;
       padding: 10px 20px;
@@ -62,8 +63,11 @@ function applySettings(s) {
       font-weight: 600;
       font-family: 'Manrope', sans-serif;
       letter-spacing: 0.3px;
-      position: relative;
-      z-index: 99;
+      position: sticky;
+      top: 0;
+      z-index: 101;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     `;
     document.body.insertBefore(banner, document.body.firstChild);
   }
