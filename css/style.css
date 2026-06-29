@@ -48,6 +48,12 @@ body {
   overflow: hidden;
 }
 
+#siteBanner {
+  position: sticky;
+  top: 64px;
+  z-index: 99;
+}
+
 .header::before {
   content: "";
   position: absolute;
