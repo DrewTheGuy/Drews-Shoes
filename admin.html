@@ -582,11 +582,12 @@ async function toggleStatus(i) {
   const newStock = newStatus === "sold" ? 0 : 1;
   try {
     await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "PATCH", body: JSON.stringify({ status: newStatus, stock: newStock }) });
-    // If marking as sold, archive it (check for duplicate first)
+    // If marking as sold, archive it (check by product id to avoid duplicates)
     if (newStatus === "sold") {
-      const existing = await sbFetch(`/rest/v1/sold_archive?name=eq.${encodeURIComponent(item.name)}&price=eq.${encodeURIComponent(item.price)}${item.size ? '&size=eq.' + item.size : ''}&select=id`);
+      const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
       if (!existing.length) {
         const archivePayload = {
+          product_id: item.id,
           name: item.name,
           category: item.category,
           size: item.size || null,
