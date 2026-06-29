@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Manrope', sans-serif; background: #f2f2f2; color: #111; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+    body { font-family: 'Manrope', sans-serif; background: #f2f2f2; color: #111; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; min-height: 100vh; }
 
     .header {
       background: #111; padding: 0 32px; height: 64px;
@@ -50,39 +50,45 @@
     .helper { font-size: 11px; color: #aaa; margin-top: 2px; }
 
     .btn-primary {
-      padding: 11px 22px; background: #111; color: #fff; border: none;
+      padding: 10px 20px; background: #111; color: #fff; border: none;
       border-radius: 8px; font-family: 'Manrope', sans-serif;
-      font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
       cursor: pointer; transition: opacity 0.15s;
+      -webkit-font-smoothing: antialiased;
     }
-    .btn-primary:hover { opacity: 0.8; }
+    .btn-primary:hover { opacity: 0.78; }
     .btn-secondary {
-      padding: 11px 22px; background: #f0f0f0; color: #555; border: none;
+      padding: 10px 20px; background: #ebebeb; color: #555; border: none;
       border-radius: 8px; font-family: 'Manrope', sans-serif;
-      font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+      font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
       cursor: pointer; transition: background 0.15s;
+      -webkit-font-smoothing: antialiased;
     }
-    .btn-secondary:hover { background: #e0e0e0; }
+    .btn-secondary:hover { background: #ddd; }
     .btn-danger {
-      padding: 5px 10px; border-radius: 6px; border: 1px solid #eee;
-      background: #fff; color: #bbb; cursor: pointer;
-      font-size: 10px; font-weight: 700; font-family: 'Manrope', sans-serif;
+      padding: 5px 11px; border-radius: 6px; border: 1px solid #ebebeb;
+      background: #fff; color: #ccc; cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
       transition: color 0.15s, border-color 0.15s;
+      -webkit-font-smoothing: antialiased;
     }
-    .btn-danger:hover { color: #dc2626; border-color: #dc2626; }
+    .btn-danger:hover { color: #dc2626; border-color: #fca5a5; background: #fff5f5; }
     .btn-edit {
-      padding: 5px 10px; border-radius: 6px; border: 1px solid #ddd;
-      background: #fff; color: #555; cursor: pointer;
-      font-size: 10px; font-weight: 700; font-family: 'Manrope', sans-serif;
-      transition: color 0.15s, border-color 0.15s;
+      padding: 5px 11px; border-radius: 6px; border: 1px solid #e0e0e0;
+      background: #fff; color: #666; cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      -webkit-font-smoothing: antialiased;
     }
-    .btn-edit:hover { color: #111; border-color: #111; }
+    .btn-edit:hover { color: #111; border-color: #bbb; background: #f9f9f9; }
     .btn-status {
-      padding: 5px 10px; border-radius: 6px; border: none; cursor: pointer;
-      font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+      padding: 5px 11px; border-radius: 6px; border: none; cursor: pointer;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
       font-family: 'Manrope', sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
-    .btn-status.in-stock { background: #f0f0f0; color: #555; }
+    .btn-status.in-stock { background: #f0f0f0; color: #444; }
+    .btn-status.in-stock:hover { background: #e4e4e4; }
     .btn-status.sold { background: #fee2e2; color: #dc2626; }
 
     .sub-tabs { display: flex; gap: 6px; margin-bottom: 20px; }
