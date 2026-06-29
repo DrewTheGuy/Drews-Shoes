@@ -179,15 +179,15 @@
       font-size: 22px; margin: 0 auto 16px;
     }
     .confirm-title {
-      font-size: 16px; font-weight: 800; color: #111;
-      margin-bottom: 8px; letter-spacing: -0.3px;
+      font-size: 18px; font-weight: 800; color: #111;
+      margin-bottom: 10px; letter-spacing: -0.5px;
     }
     .confirm-message {
-      font-size: 13px; font-weight: 600; color: #555;
+      font-size: 13px; font-weight: 600; color: #888;
       margin-bottom: 8px; line-height: 1.5;
     }
     .confirm-sub {
-      font-size: 12px; color: #aaa; margin-bottom: 24px; line-height: 1.5;
+      font-size: 12px; color: #bbb; margin-bottom: 24px; line-height: 1.5;
     }
     .confirm-btns { display: flex; flex-direction: column; gap: 8px; }
 
@@ -694,7 +694,7 @@ async function markSold(i) {
 function openSoldConfirm(i) {
   window.pendingSoldIndex = i;
   const item = data[currentCategory][i];
-  document.getElementById("confirmMessage").textContent = `"${item.name}"`;
+  document.getElementById("confirmMessage").textContent = item.name;
   document.getElementById("confirmModal").classList.add("active");
 }
 
@@ -739,7 +739,7 @@ async function toggleStatus(i) {
 async function deleteProduct(i) {
   window.pendingRemoveIndex = i;
   const item = data[currentCategory][i];
-  document.getElementById("removeMessage").textContent = `"${item.name}"`;
+  document.getElementById("removeMessage").textContent = item.name;
   document.getElementById("removeModal").classList.add("active");
 }
 
