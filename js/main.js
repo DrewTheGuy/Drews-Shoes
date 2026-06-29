@@ -59,7 +59,7 @@ function applySettings(s) {
     const g = parseInt(bgColor.slice(3,5), 16);
     const b = parseInt(bgColor.slice(5,7), 16);
     banner.style.cssText = `
-      background: rgb(${r},${g},${b});
+      background: rgba(${r},${g},${b},0.78);
       color: ${s.banner_text_color || '#fff'};
       text-align: center;
       padding: 10px 20px;
