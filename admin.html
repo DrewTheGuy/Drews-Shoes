@@ -153,6 +153,11 @@
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 9999; }
     .toast.show { opacity: 1; }
 
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+    .relist-modal { background: #fff; border-radius: 16px; padding: 28px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .relist-modal h2 { font-size: 15px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: #111; margin-bottom: 8px; }
+
     .quick-links { display: flex; flex-direction: column; gap: 10px; }
     .quick-link {
       display: flex; align-items: center; gap: 16px;
@@ -428,6 +433,29 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- RELIST MODAL -->
+<div class="modal-overlay" id="relistModal" onclick="if(event.target===this)closeRelistModal()">
+  <div class="relist-modal">
+    <h2>Relist Product</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.5;">Edit details if needed then relist. This will remove it from the Sold Archive and add it back to Products.</p>
+    <input type="hidden" id="relistId">
+    <input type="hidden" id="relistCategory">
+    <div class="form-grid">
+      <div class="form-group full"><label>Product Name</label><input type="text" id="relistName"></div>
+      <div class="form-group" id="relistSizeRow"><label>Size (US)</label><input type="number" id="relistSize" step="0.5"></div>
+      <div class="form-group" id="relistMetaRow"><label>Size / Description</label><input type="text" id="relistMeta"></div>
+      <div class="form-group"><label>Listed Price</label><input type="text" id="relistPrice"></div>
+      <div class="form-group"><label>Sold For (optional)</label><input type="text" id="relistSoldFor" placeholder="e.g. $220"></div>
+      <div class="form-group full"><label>Image URL</label><input type="text" id="relistImage"></div>
+      <div class="form-group full"><label>Stripe Payment Link</label><input type="text" id="relistStripe" placeholder="https://buy.stripe.com/..."></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn-primary" onclick="confirmRelist()">Relist Product</button>
+      <button class="btn-secondary" onclick="closeRelistModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://jnxobqrlpdtpsumnwvde.supabase.co";
 const SUPABASE_KEY = "sb_publishable_UK_x5tuLJIntL4-EFqCqKA_bx-3QXdT";
@@ -577,30 +605,41 @@ function renderList() {
 
 async function toggleStatus(i) {
   const item = data[currentCategory][i];
-  const newStatus = item.status === "sold" ? "in-stock" : "sold";
-  const newStock = newStatus === "sold" ? 0 : 1;
-  try {
-    await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "PATCH", body: JSON.stringify({ status: newStatus, stock: newStock }) });
-    // If marking as sold, archive it (check by product id to avoid duplicates)
-    if (newStatus === "sold") {
+  const isSold = item.status !== "sold" && item.stock > 0 ? false : true;
+
+  if (!isSold) {
+    // Mark as sold — archive it and remove from products
+    if (!confirm(`Mark "${item.name}" as sold and move it to the Sold Archive?`)) return;
+    try {
+      // Archive first
       const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
       if (!existing.length) {
-        const archivePayload = {
+        await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
           product_id: item.id,
           name: item.name,
           category: item.category,
           size: item.size || null,
           meta: item.meta || null,
           price: item.price,
+          sold_for: null,
           image: item.image,
           stripe_link: item.stripeLink || null,
           sold_at: new Date().toISOString()
-        };
-        await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify(archivePayload) });
+        })});
       }
-    }
-    item.status = newStatus; item.stock = newStock; renderList(); showToast(newStatus === "sold" ? "Marked sold & archived!" : "Status updated");
-  } catch(e) { showToast("Failed to update"); console.error(e); }
+      // Delete from products
+      await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
+      data[currentCategory].splice(i, 1);
+      renderList();
+      showToast("Moved to Sold Archive!");
+    } catch(e) { showToast("Failed to mark sold"); console.error(e); }
+  } else {
+    // Toggle back to in-stock without relisting (shouldn't normally happen from products tab now)
+    try {
+      await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "PATCH", body: JSON.stringify({ status: "in-stock", stock: 1 }) });
+      item.status = "in-stock"; item.stock = 1; renderList(); showToast("Status updated");
+    } catch(e) { showToast("Failed to update"); console.error(e); }
+  }
 }
 
 async function deleteProduct(i) {
@@ -845,6 +884,90 @@ function renderArchive() {
         <div class="product-price">${s.price}</div>
       </div>`;
   }).join("");
+}
+
+// DELETE ARCHIVE ITEM
+async function deleteArchiveItem(id) {
+  if (!confirm("Remove this from the sold archive?")) return;
+  try {
+    await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+    archiveData = archiveData.filter(s => s.id !== id);
+    renderArchive();
+    showToast("Removed from archive");
+  } catch(e) { showToast("Failed to remove"); console.error(e); }
+}
+
+// RELIST MODAL
+function openRelistModal(item) {
+  document.getElementById("relistId").value = item.id;
+  document.getElementById("relistName").value = item.name;
+  document.getElementById("relistCategory").value = item.category;
+  document.getElementById("relistSize").value = item.size || "";
+  document.getElementById("relistMeta").value = item.meta || "";
+  document.getElementById("relistPrice").value = item.price;
+  document.getElementById("relistSoldFor").value = item.sold_for || "";
+  document.getElementById("relistImage").value = item.image || "";
+  document.getElementById("relistStripe").value = item.stripe_link || "";
+
+  const isSneaker = item.category === "sneakers";
+  document.getElementById("relistSizeRow").style.display = isSneaker ? "" : "none";
+  document.getElementById("relistMetaRow").style.display = isSneaker ? "none" : "";
+
+  document.getElementById("relistModal").classList.add("active");
+}
+
+function closeRelistModal() {
+  document.getElementById("relistModal").classList.remove("active");
+}
+
+async function confirmRelist() {
+  const archiveId = document.getElementById("relistId").value;
+  const category = document.getElementById("relistCategory").value;
+  const isSneaker = category === "sneakers";
+  const soldFor = document.getElementById("relistSoldFor").value.trim();
+
+  // Update sold_for in archive before removing
+  if (soldFor) {
+    try {
+      await sbFetch(`/rest/v1/sold_archive?id=eq.${archiveId}`, { method: "PATCH", body: JSON.stringify({ sold_for: soldFor }) });
+    } catch(e) { console.error("Failed to update sold_for:", e); }
+  }
+
+  const payload = {
+    name: document.getElementById("relistName").value.trim(),
+    category: category,
+    price: document.getElementById("relistPrice").value.trim(),
+    image: document.getElementById("relistImage").value.trim(),
+    stripe_link: document.getElementById("relistStripe").value.trim() || null,
+    status: "in-stock",
+    stock: 1,
+    images: JSON.stringify([document.getElementById("relistImage").value.trim()])
+  };
+
+  if (isSneaker) {
+    payload.size = parseFloat(document.getElementById("relistSize").value) || null;
+  } else {
+    payload.meta = document.getElementById("relistMeta").value.trim();
+  }
+
+  try {
+    const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+    // Remove from archive
+    await sbFetch(`/rest/v1/sold_archive?id=eq.${archiveId}`, { method: "DELETE" });
+    archiveData = archiveData.filter(s => s.id != archiveId);
+    // Add to local data
+    const newItem = rows[0];
+    if (!data[category]) data[category] = [];
+    data[category].push({
+      id: newItem.id, name: newItem.name, category: newItem.category,
+      size: newItem.size, meta: newItem.meta, price: newItem.price,
+      status: "in-stock", stock: 1, image: newItem.image,
+      images: [newItem.image], stripeLink: newItem.stripe_link
+    });
+    closeRelistModal();
+    renderArchive();
+    showToast("Relisted successfully!");
+  } catch(e) { showToast("Failed to relist"); console.error(e); }
 }
 
 function showToast(msg) {
