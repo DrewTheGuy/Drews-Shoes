@@ -582,19 +582,22 @@ async function toggleStatus(i) {
   const newStock = newStatus === "sold" ? 0 : 1;
   try {
     await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "PATCH", body: JSON.stringify({ status: newStatus, stock: newStock }) });
-    // If marking as sold, archive it
+    // If marking as sold, archive it (check for duplicate first)
     if (newStatus === "sold") {
-      const archivePayload = {
-        name: item.name,
-        category: item.category,
-        size: item.size || null,
-        meta: item.meta || null,
-        price: item.price,
-        image: item.image,
-        stripe_link: item.stripeLink || null,
-        sold_at: new Date().toISOString()
-      };
-      await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify(archivePayload) });
+      const existing = await sbFetch(`/rest/v1/sold_archive?name=eq.${encodeURIComponent(item.name)}&price=eq.${encodeURIComponent(item.price)}${item.size ? '&size=eq.' + item.size : ''}&select=id`);
+      if (!existing.length) {
+        const archivePayload = {
+          name: item.name,
+          category: item.category,
+          size: item.size || null,
+          meta: item.meta || null,
+          price: item.price,
+          image: item.image,
+          stripe_link: item.stripeLink || null,
+          sold_at: new Date().toISOString()
+        };
+        await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify(archivePayload) });
+      }
     }
     item.status = newStatus; item.stock = newStock; renderList(); showToast(newStatus === "sold" ? "Marked sold & archived!" : "Status updated");
   } catch(e) { showToast("Failed to update"); console.error(e); }
