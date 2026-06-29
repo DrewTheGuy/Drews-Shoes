@@ -732,15 +732,21 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
-  const payload = {
-    contact_email: document.getElementById("settingEmail").value.trim(),
-    founded_year: document.getElementById("settingYear").value.trim(),
-    ig_url: document.getElementById("socialIG").value.trim(),
-    yt_url: document.getElementById("socialYT").value.trim(),
-    tt_url: document.getElementById("socialTT").value.trim(),
-    fb_url: document.getElementById("socialFB").value.trim(),
-    tw_url: document.getElementById("socialTW").value.trim(),
+  // Only include fields that have values so we don't overwrite with blanks
+  const payload = {};
+  const fields = {
+    contact_email: "settingEmail",
+    founded_year: "settingYear",
+    ig_url: "socialIG",
+    yt_url: "socialYT",
+    tt_url: "socialTT",
+    fb_url: "socialFB",
+    tw_url: "socialTW"
   };
+  Object.entries(fields).forEach(([key, id]) => {
+    const val = document.getElementById(id).value.trim();
+    if (val) payload[key] = val;
+  });
   try {
     await sbFetch("/rest/v1/settings?id=eq.1", { method: "PATCH", body: JSON.stringify(payload) });
     const igQuickLink = document.getElementById("quickLinkIG");
