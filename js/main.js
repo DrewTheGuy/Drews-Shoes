@@ -59,7 +59,7 @@ function applySettings(s) {
     const g = parseInt(bgColor.slice(3,5), 16);
     const b = parseInt(bgColor.slice(5,7), 16);
     banner.style.cssText = `
-      background: rgba(${r},${g},${b},0.75);
+      background: rgba(${r},${g},${b},0.78);
       color: ${s.banner_text_color || '#fff'};
       text-align: center;
       padding: 10px 20px;
@@ -67,13 +67,10 @@ function applySettings(s) {
       font-weight: 600;
       font-family: 'Manrope', sans-serif;
       letter-spacing: 0.3px;
-      position: relative;
-      z-index: 98;
-      border-bottom: 1px solid rgba(255,255,255,0.12);
     `;
     const header = document.querySelector(".header");
-    if (header && header.nextSibling) {
-      header.parentNode.insertBefore(banner, header.nextSibling);
+    if (header) {
+      header.insertAdjacentElement("afterend", banner);
     } else {
       document.body.insertBefore(banner, document.body.firstChild);
     }
