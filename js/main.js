@@ -59,7 +59,7 @@ function applySettings(s) {
     const g = parseInt(bgColor.slice(3,5), 16);
     const b = parseInt(bgColor.slice(5,7), 16);
     banner.style.cssText = `
-      background: rgba(${r},${g},${b},0.82);
+      background: rgba(${r},${g},${b},0.75);
       color: ${s.banner_text_color || '#fff'};
       text-align: center;
       padding: 10px 20px;
@@ -70,8 +70,7 @@ function applySettings(s) {
       position: sticky;
       top: 64px;
       z-index: 98;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
     `;
     const header = document.querySelector(".header");
     if (header && header.nextSibling) {
@@ -87,8 +86,11 @@ function applySettings(s) {
   igLinks.forEach(a => a.href = s.ig_url || "https://www.instagram.com");
   ytLinks.forEach(a => a.href = s.yt_url || "https://www.youtube.com");
 
-  // Purchase modal IG link
-  if (s.ig_url) IG_DM_URL = s.ig_url;
+  // Purchase modal IG DM link — convert profile URL to DM URL
+  if (s.ig_url) {
+    const handle = s.ig_url.replace(/https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/$/, '');
+    IG_DM_URL = handle ? `https://ig.me/m/${handle}` : IG_DM_URL;
+  }
 
   // Footer copyright year
   if (s.founded_year) {
