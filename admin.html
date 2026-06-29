@@ -905,24 +905,24 @@ function renderArchive() {
 }
 
 // CONFIRM MODAL
-let confirmCallback = null;
+window.confirmCallback = null;
 
 function showConfirm(message, onConfirm) {
   document.getElementById("confirmMessage").textContent = message;
   document.getElementById("confirmModal").classList.add("active");
-  confirmCallback = onConfirm;
+  window.confirmCallback = onConfirm;
 }
 
 function closeConfirm() {
   document.getElementById("confirmModal").classList.remove("active");
-  confirmCallback = null;
+  window.confirmCallback = null;
 }
 
 async function doConfirm() {
   closeConfirm();
-  if (confirmCallback) {
+  if (window.confirmCallback) {
     try {
-      await confirmCallback();
+      await window.confirmCallback();
     } catch(e) {
       console.error("Confirm action failed:", e);
       showToast("Something went wrong");
