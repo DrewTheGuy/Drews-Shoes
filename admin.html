@@ -436,8 +436,8 @@
   <div class="relist-modal" style="max-width:380px; text-align:center;">
     <p style="font-size:15px; font-weight:700; color:#111; margin-bottom:10px;" id="confirmMessage"></p>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:24px;">
-      <button class="btn-primary" id="confirmOkBtn">Confirm</button>
-      <button class="btn-secondary" id="confirmCancelBtn">Cancel</button>
+      <button class="btn-primary" onclick="markSold()">Confirm</button>
+      <button class="btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
 </div>
@@ -456,7 +456,6 @@
       <div class="form-group" id="relistSizeRow"><label>Size (US)</label><input type="number" id="relistSize" step="0.5"></div>
       <div class="form-group" id="relistMetaRow"><label>Size / Description</label><input type="text" id="relistMeta"></div>
       <div class="form-group"><label>Listed Price</label><input type="text" id="relistPrice"></div>
-      <div class="form-group"><label>Sold For (optional)</label><input type="text" id="relistSoldFor" placeholder="e.g. $220"></div>
       <div class="form-group full"><label>Image URL</label><input type="text" id="relistImage"></div>
       <div class="form-group full"><label>Stripe Payment Link</label><input type="text" id="relistStripe" placeholder="https://buy.stripe.com/..."></div>
     </div>
@@ -590,7 +589,7 @@ function renderList() {
         </div>
         <div class="product-price">${item.price}</div>
         <div class="product-actions">
-          <button class="btn-status ${isSold ? 'sold' : 'in-stock'}" onclick="markSold(${i})">${isSold ? 'Sold' : 'Mark as Sold'}</button>
+          <button class="btn-status ${isSold ? 'sold' : 'in-stock'}" onclick="openSoldConfirm(${i})">${isSold ? 'Sold' : 'Mark as Sold'}</button>
           <button class="btn-edit" onclick="openEdit(${i})">Edit</button>
           <button class="btn-danger" onclick="deleteProduct(${i})">Remove</button>
         </div>
@@ -615,8 +614,11 @@ function renderList() {
 }
 
 async function markSold(i) {
-  const item = data[currentCategory][i];
-  if (!confirm(`Mark "${item.name}" as sold and move to archive?`)) return;
+  // i can be passed directly or read from global pendingSoldIndex
+  const idx = (i !== undefined) ? i : window.pendingSoldIndex;
+  if (idx === undefined || idx === null) return;
+  const item = data[currentCategory][idx];
+  document.getElementById("confirmModal").classList.remove("active");
   try {
     const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
     if (!existing.length) {
@@ -634,10 +636,18 @@ async function markSold(i) {
       })});
     }
     await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
-    data[currentCategory].splice(i, 1);
+    data[currentCategory].splice(idx, 1);
+    window.pendingSoldIndex = null;
     renderList();
     showToast("Moved to Sold Archive!");
   } catch(e) { showToast("Failed: " + e.message); console.error(e); }
+}
+
+function openSoldConfirm(i) {
+  window.pendingSoldIndex = i;
+  const item = data[currentCategory][i];
+  document.getElementById("confirmMessage").textContent = `Mark "${item.name}" as sold and move to the Sold Archive?`;
+  document.getElementById("confirmModal").classList.add("active");
 }
 
 async function toggleStatus(i) {
@@ -978,7 +988,6 @@ function openRelistModal(index) {
   document.getElementById("relistSize").value = item.size || "";
   document.getElementById("relistMeta").value = item.meta || "";
   document.getElementById("relistPrice").value = item.price;
-  document.getElementById("relistSoldFor").value = item.sold_for || "";
   document.getElementById("relistImage").value = item.image || "";
   document.getElementById("relistStripe").value = item.stripe_link || "";
 
@@ -997,14 +1006,6 @@ async function confirmRelist() {
   const archiveId = document.getElementById("relistId").value;
   const category = document.getElementById("relistCategory").value;
   const isSneaker = category === "sneakers";
-  const soldFor = document.getElementById("relistSoldFor").value.trim();
-
-  // Update sold_for in archive before removing
-  if (soldFor) {
-    try {
-      await sbFetch(`/rest/v1/sold_archive?id=eq.${archiveId}`, { method: "PATCH", body: JSON.stringify({ sold_for: soldFor }) });
-    } catch(e) { console.error("Failed to update sold_for:", e); }
-  }
 
   const payload = {
     name: document.getElementById("relistName").value.trim(),
