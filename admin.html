@@ -432,12 +432,12 @@
 </div>
 
 <!-- CONFIRM MODAL -->
-<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+<div class="modal-overlay" id="confirmModal">
   <div class="relist-modal" style="max-width:380px; text-align:center;">
     <p style="font-size:15px; font-weight:700; color:#111; margin-bottom:10px;" id="confirmMessage"></p>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:24px;">
-      <button class="btn-primary" onclick="doConfirm()">Confirm</button>
-      <button class="btn-secondary" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-primary" id="confirmOkBtn">Confirm</button>
+      <button class="btn-secondary" id="confirmCancelBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -1025,6 +1025,18 @@ function showToast(msg) {
 
 loadProducts().then(() => loadStats());
 loadSettings();
+
+// Confirm modal
+document.getElementById("confirmOkBtn").addEventListener("click", doConfirm);
+document.getElementById("confirmCancelBtn").addEventListener("click", closeConfirm);
+document.getElementById("confirmModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("confirmModal")) closeConfirm();
+});
+
+// Relist modal
+document.getElementById("relistModal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("relistModal")) closeRelistModal();
+});
 </script>
 </body>
 </html>
