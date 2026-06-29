@@ -1,20 +1,34 @@
 const SUPABASE_URL = "https://jnxobqrlpdtpsumnwvde.supabase.co";
 const SUPABASE_KEY = "sb_publishable_UK_x5tuLJIntL4-EFqCqKA_bx-3QXdT";
 
+function sbHeaders() {
+  return {
+    "apikey": SUPABASE_KEY,
+    "Authorization": `Bearer ${SUPABASE_KEY}`
+  };
+}
+
 // ================================
-//  SUPABASE FETCH
+//  FETCH SETTINGS
+// ================================
+async function fetchSettings() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/settings?select=*&limit=1`, {
+    headers: sbHeaders()
+  });
+  if (!res.ok) return {};
+  const rows = await res.json();
+  return rows[0] || {};
+}
+
+// ================================
+//  FETCH PRODUCTS
 // ================================
 async function fetchProducts() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=id`, {
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": `Bearer ${SUPABASE_KEY}`
-    }
+    headers: sbHeaders()
   });
   if (!res.ok) throw new Error("Failed to fetch products");
   const rows = await res.json();
-
-  // Normalize rows to match existing item shape
   return rows.map(r => ({
     id: r.id,
     name: r.name,
@@ -28,6 +42,52 @@ async function fetchProducts() {
     stripeLink: r.stripe_link,
     stock: r.stock
   }));
+}
+
+// ================================
+//  APPLY SETTINGS TO PAGE
+// ================================
+function applySettings(s) {
+  // Banner
+  if (s.banner_active && s.banner_text) {
+    const banner = document.createElement("div");
+    banner.id = "siteBanner";
+    banner.textContent = s.banner_text;
+    banner.style.cssText = `
+      background: ${s.banner_color || '#111'};
+      color: ${s.banner_text_color || '#fff'};
+      text-align: center;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Manrope', sans-serif;
+      letter-spacing: 0.3px;
+      position: relative;
+      z-index: 99;
+    `;
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+
+  // Footer social links — fall back to platform homepage if not set
+  const igLinks = document.querySelectorAll("a[data-social='ig']");
+  const ytLinks = document.querySelectorAll("a[data-social='yt']");
+  igLinks.forEach(a => a.href = s.ig_url || "https://www.instagram.com");
+  ytLinks.forEach(a => a.href = s.yt_url || "https://www.youtube.com");
+
+  // Purchase modal IG link
+  if (s.ig_url) IG_DM_URL = s.ig_url;
+
+  // Footer copyright year
+  if (s.founded_year) {
+    const yr = document.getElementById("footerYear");
+    if (yr) yr.textContent = s.founded_year + "–" + new Date().getFullYear();
+  }
+
+  // Site name
+  if (s.site_name) {
+    const nameEls = document.querySelectorAll("[data-site-name]");
+    nameEls.forEach(el => el.textContent = s.site_name);
+  }
 }
 
 // ================================
@@ -108,8 +168,8 @@ function closeLightbox() {
 // ================================
 //  PURCHASE MODAL
 // ================================
-const EMAIL = "drewssshoes@definiteim.com";
-const IG_URL = "https://ig.me/m/drewsshoes_";
+let CONTACT_EMAIL = "drewssshoes@definiteim.com";
+let IG_DM_URL = "https://ig.me/m/drewsshoes_";
 
 function buildModal() {
   const overlay = document.createElement("div");
@@ -128,7 +188,7 @@ function buildModal() {
         </a>
         <div id="modalContactDivider" class="modal-divider" style="display:none;"><span>or contact us here</span></div>
         <div class="modal-socials">
-          <a id="modalIG" href="${IG_URL}" target="_blank" class="modal-social-btn" aria-label="Instagram DM">
+          <a id="modalIG" href="#" target="_blank" class="modal-social-btn" aria-label="Instagram DM">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2"/></svg>
             Instagram DM
           </a>
@@ -152,11 +212,15 @@ function openModal(btn) {
   const meta = btn.dataset.meta;
   const price = btn.dataset.price;
   const stripeLink = btn.dataset.stripe;
+
   document.getElementById("modalProduct").textContent = name;
   document.getElementById("modalMeta").textContent = meta + "  ·  " + price;
+  document.getElementById("modalIG").href = IG_DM_URL;
+
   const subject = encodeURIComponent("Inquiry: " + name + (meta ? " - " + meta : ""));
-  const body = encodeURIComponent("Hey Drew, is this still available?\n\n" + name + (meta ? "\n" + meta : "") + "\n\nAsking price: " + price);
-  document.getElementById("modalEmail").href = "mailto:" + EMAIL + "?subject=" + subject + "&body=" + body;
+  const body = encodeURIComponent("Hey, is this still available?\n\n" + name + (meta ? "\n" + meta : "") + "\n\nAsking price: " + price);
+  document.getElementById("modalEmail").href = "mailto:" + CONTACT_EMAIL + "?subject=" + subject + "&body=" + body;
+
   const stripeBtn = document.getElementById("modalStripe");
   const divider = document.getElementById("modalContactDivider");
   const prompt = document.getElementById("modalPrompt");
@@ -231,12 +295,21 @@ document.addEventListener("DOMContentLoaded", async function() {
   buildLightbox();
   buildModal();
 
+  // Load settings and products in parallel
+  let settings = {};
   let allProducts = [];
+
   try {
-    allProducts = await fetchProducts();
+    [settings, allProducts] = await Promise.all([fetchSettings(), fetchProducts()]);
   } catch(e) {
-    console.error("Could not load products from Supabase:", e);
+    console.error("Failed to load:", e);
+    try { allProducts = await fetchProducts(); } catch(e2) { console.error(e2); }
   }
+
+  // Apply settings
+  if (settings.contact_email) CONTACT_EMAIL = settings.contact_email;
+  if (settings.ig_url) IG_DM_URL = settings.ig_url.replace("instagram.com/", "ig.me/m/").replace("www.", "");
+  applySettings(settings);
 
   const shoes = allProducts.filter(p => p.category === "sneakers");
   const streetwear = allProducts.filter(p => p.category === "streetwear");
