@@ -164,6 +164,33 @@
     .relist-modal { background: #fff; border-radius: 16px; padding: 28px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
     .relist-modal h2 { font-size: 15px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: #111; margin-bottom: 8px; }
 
+    .confirm-modal-box {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px 28px;
+      width: 90%; max-width: 400px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .confirm-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: #f0f0f0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin: 0 auto 16px;
+    }
+    .confirm-title {
+      font-size: 16px; font-weight: 800; color: #111;
+      margin-bottom: 8px; letter-spacing: -0.3px;
+    }
+    .confirm-message {
+      font-size: 13px; font-weight: 600; color: #555;
+      margin-bottom: 8px; line-height: 1.5;
+    }
+    .confirm-sub {
+      font-size: 12px; color: #aaa; margin-bottom: 24px; line-height: 1.5;
+    }
+    .confirm-btns { display: flex; flex-direction: column; gap: 8px; }
+
     .quick-links { display: flex; flex-direction: column; gap: 10px; }
     .quick-link {
       display: flex; align-items: center; gap: 16px;
@@ -437,13 +464,28 @@
 
 </div>
 
-<!-- CONFIRM MODAL -->
+<!-- MARK AS SOLD CONFIRM MODAL -->
 <div class="modal-overlay" id="confirmModal">
-  <div class="relist-modal" style="max-width:380px; text-align:center;">
-    <p style="font-size:15px; font-weight:700; color:#111; margin-bottom:10px;" id="confirmMessage"></p>
-    <div style="display:flex; gap:10px; justify-content:center; margin-top:24px;">
-      <button class="btn-primary" onclick="markSold()">Confirm</button>
+  <div class="confirm-modal-box">
+    <p class="confirm-title">Mark as Sold?</p>
+    <p class="confirm-message" id="confirmMessage"></p>
+    <p class="confirm-sub">This will remove it from Products and move it to your Sold Archive.</p>
+    <div class="confirm-btns">
+      <button class="btn-primary" onclick="markSold()">Yes, Mark as Sold</button>
       <button class="btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('active')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- REMOVE CONFIRM MODAL -->
+<div class="modal-overlay" id="removeModal">
+  <div class="confirm-modal-box">
+    <p class="confirm-title" style="color:#dc2626;">Remove Product?</p>
+    <p class="confirm-message" id="removeMessage"></p>
+    <p class="confirm-sub">This permanently deletes the product. This cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn-primary" style="background:#dc2626;" onclick="confirmRemove()">Yes, Remove</button>
+      <button class="btn-secondary" onclick="document.getElementById('removeModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
 </div>
@@ -595,7 +637,7 @@ function renderList() {
         </div>
         <div class="product-price">${item.price}</div>
         <div class="product-actions">
-          <button class="btn-status ${isSold ? 'sold' : 'in-stock'}" onclick="openSoldConfirm(${i})">${isSold ? 'Sold' : 'Mark as Sold'}</button>
+          <button class="btn-status ${isSold ? 'sold' : 'in-stock'}" onclick="openSoldConfirm(${i})">${isSold ? 'Sold' : 'Mark as sold'}</button>
           <button class="btn-edit" onclick="openEdit(${i})">Edit</button>
           <button class="btn-danger" onclick="deleteProduct(${i})">Remove</button>
         </div>
@@ -652,7 +694,7 @@ async function markSold(i) {
 function openSoldConfirm(i) {
   window.pendingSoldIndex = i;
   const item = data[currentCategory][i];
-  document.getElementById("confirmMessage").textContent = `Mark "${item.name}" as sold and move to the Sold Archive?`;
+  document.getElementById("confirmMessage").textContent = `"${item.name}"`;
   document.getElementById("confirmModal").classList.add("active");
 }
 
@@ -695,11 +737,22 @@ async function toggleStatus(i) {
 
 
 async function deleteProduct(i) {
+  window.pendingRemoveIndex = i;
   const item = data[currentCategory][i];
-  if (!confirm(`Permanently remove "${item.name}"?`)) return;
+  document.getElementById("removeMessage").textContent = `"${item.name}"`;
+  document.getElementById("removeModal").classList.add("active");
+}
+
+async function confirmRemove() {
+  const i = window.pendingRemoveIndex;
+  if (i === undefined || i === null) return;
+  const item = data[currentCategory][i];
+  document.getElementById("removeModal").classList.remove("active");
   try {
     await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
-    data[currentCategory].splice(i, 1); renderList(); showToast("Product removed");
+    data[currentCategory].splice(i, 1);
+    window.pendingRemoveIndex = null;
+    renderList(); showToast("Product removed");
   } catch(e) { showToast("Failed to delete"); console.error(e); }
 }
 
