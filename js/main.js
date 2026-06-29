@@ -48,14 +48,18 @@ async function fetchProducts() {
 //  APPLY SETTINGS TO PAGE
 // ================================
 function applySettings(s) {
-  // Banner
+  // Banner — insert after header so it sits below it
   if (s.banner_active && s.banner_text) {
     const banner = document.createElement("div");
     banner.id = "siteBanner";
     banner.textContent = s.banner_text;
-    const hex = s.banner_color || '#111';
+    const bgColor = s.banner_color || '#111';
+    // Convert hex to rgba for transparency
+    const r = parseInt(bgColor.slice(1,3), 16);
+    const g = parseInt(bgColor.slice(3,5), 16);
+    const b = parseInt(bgColor.slice(5,7), 16);
     banner.style.cssText = `
-      background: ${hex}ee;
+      background: rgba(${r},${g},${b},0.82);
       color: ${s.banner_text_color || '#fff'};
       text-align: center;
       padding: 10px 20px;
@@ -64,12 +68,17 @@ function applySettings(s) {
       font-family: 'Manrope', sans-serif;
       letter-spacing: 0.3px;
       position: sticky;
-      top: 0;
-      z-index: 101;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      top: 64px;
+      z-index: 98;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     `;
-    document.body.insertBefore(banner, document.body.firstChild);
+    const header = document.querySelector(".header");
+    if (header && header.nextSibling) {
+      header.parentNode.insertBefore(banner, header.nextSibling);
+    } else {
+      document.body.insertBefore(banner, document.body.firstChild);
+    }
   }
 
   // Footer social links — fall back to platform homepage if not set
