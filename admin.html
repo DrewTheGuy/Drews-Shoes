@@ -232,7 +232,7 @@
           <label>Price</label>
           <input type="text" id="inputPrice" placeholder="e.g. $240">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Status</label>
           <select id="inputStatus">
             <option value="in-stock">In Stock</option>
@@ -689,13 +689,12 @@ async function toggleStatus(i) {
 
 
 async function deleteProduct(i) {
-  showConfirm("Permanently remove this product?", async () => {
-    const item = data[currentCategory][i];
-    try {
-      await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
-      data[currentCategory].splice(i, 1); renderList(); showToast("Product removed");
-    } catch(e) { showToast("Failed to delete"); console.error(e); }
-  });
+  const item = data[currentCategory][i];
+  if (!confirm(`Permanently remove "${item.name}"?`)) return;
+  try {
+    await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
+    data[currentCategory].splice(i, 1); renderList(); showToast("Product removed");
+  } catch(e) { showToast("Failed to delete"); console.error(e); }
 }
 
 function openEdit(i) {
