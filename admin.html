@@ -431,6 +431,17 @@
 
 </div>
 
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="relist-modal" style="max-width:380px; text-align:center;">
+    <p style="font-size:15px; font-weight:700; color:#111; margin-bottom:10px;" id="confirmMessage"></p>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:24px;">
+      <button class="btn-primary" onclick="doConfirm()">Confirm</button>
+      <button class="btn-secondary" onclick="closeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- RELIST MODAL -->
@@ -609,8 +620,7 @@ async function toggleStatus(i) {
 
   if (!isSold) {
     // Mark as sold — archive it and remove from products
-    if (!confirm(`Mark "${item.name}" as sold and move it to the Sold Archive?`)) return;
-    try {
+    showConfirm(`Mark "${item.name}" as sold and move it to the Sold Archive?`, async () => {
       // Archive first
       const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
       if (!existing.length) {
@@ -633,6 +643,7 @@ async function toggleStatus(i) {
       renderList();
       showToast("Moved to Sold Archive!");
     } catch(e) { showToast("Failed to mark sold"); console.error(e); }
+    });
   } else {
     // Toggle back to in-stock without relisting (shouldn't normally happen from products tab now)
     try {
@@ -643,12 +654,13 @@ async function toggleStatus(i) {
 }
 
 async function deleteProduct(i) {
-  if (!confirm("Remove this product?")) return;
-  const item = data[currentCategory][i];
-  try {
-    await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
-    data[currentCategory].splice(i, 1); renderList(); showToast("Product removed");
-  } catch(e) { showToast("Failed to delete"); console.error(e); }
+  showConfirm("Permanently remove this product?", async () => {
+    const item = data[currentCategory][i];
+    try {
+      await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
+      data[currentCategory].splice(i, 1); renderList(); showToast("Product removed");
+    } catch(e) { showToast("Failed to delete"); console.error(e); }
+  });
 }
 
 function openEdit(i) {
@@ -874,27 +886,52 @@ function renderArchive() {
   list.innerHTML = filtered.map(s => {
     const meta = s.meta || (s.size ? "Size US " + s.size : "");
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+    const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
     return `
       <div class="product-row">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name">${s.name}</div>
-          <div class="product-meta">${meta} · ${s.category}${date ? " · Sold " + date : ""}</div>
+          <div class="product-meta">${meta} · ${s.category}${date ? " · " + date : ""}</div>
+          <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
-        <div class="product-price">${s.price}</div>
+        <div class="product-actions">
+          <button class="btn-edit" onclick='openRelistModal(${JSON.stringify(s).replace(/"/g, "&quot;")})'>Relist</button>
+          <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
+        </div>
       </div>`;
   }).join("");
 }
 
+// CONFIRM MODAL
+let confirmCallback = null;
+
+function showConfirm(message, onConfirm) {
+  document.getElementById("confirmMessage").textContent = message;
+  document.getElementById("confirmModal").classList.add("active");
+  confirmCallback = onConfirm;
+}
+
+function closeConfirm() {
+  document.getElementById("confirmModal").classList.remove("active");
+  confirmCallback = null;
+}
+
+function doConfirm() {
+  closeConfirm();
+  if (confirmCallback) confirmCallback();
+}
+
 // DELETE ARCHIVE ITEM
 async function deleteArchiveItem(id) {
-  if (!confirm("Remove this from the sold archive?")) return;
-  try {
-    await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
-    archiveData = archiveData.filter(s => s.id !== id);
-    renderArchive();
-    showToast("Removed from archive");
-  } catch(e) { showToast("Failed to remove"); console.error(e); }
+  showConfirm("Remove this from the sold archive?", async () => {
+    try {
+      await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+      archiveData = archiveData.filter(s => s.id !== id);
+      renderArchive();
+      showToast("Removed from archive");
+    } catch(e) { showToast("Failed to remove"); console.error(e); }
+  });
 }
 
 // RELIST MODAL
