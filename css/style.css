@@ -52,6 +52,7 @@ body {
   position: sticky;
   top: 64px;
   z-index: 99;
+  width: 100%;
 }
 
 .header::before {
@@ -194,7 +195,7 @@ body {
 
 /* Thin accent line between hero and content */
 .container-wrapper {
-  border-top: 1px solid var(--border);
+  border-top: none;
   flex: 1;
 }
 
