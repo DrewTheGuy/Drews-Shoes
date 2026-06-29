@@ -67,8 +67,7 @@ function applySettings(s) {
       font-weight: 600;
       font-family: 'Manrope', sans-serif;
       letter-spacing: 0.3px;
-      position: sticky;
-      top: 64px;
+      position: relative;
       z-index: 98;
       border-bottom: 1px solid rgba(255,255,255,0.12);
     `;
