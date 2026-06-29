@@ -917,9 +917,16 @@ function closeConfirm() {
   confirmCallback = null;
 }
 
-function doConfirm() {
+async function doConfirm() {
   closeConfirm();
-  if (confirmCallback) confirmCallback();
+  if (confirmCallback) {
+    try {
+      await confirmCallback();
+    } catch(e) {
+      console.error("Confirm action failed:", e);
+      showToast("Something went wrong");
+    }
+  }
 }
 
 // DELETE ARCHIVE ITEM
