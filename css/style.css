@@ -195,10 +195,6 @@ body {
 }
 
 /* Thin accent line between hero and content */
-.container-wrapper {
-  border-top: none;
-  flex: 1;
-}
 
 .section-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -419,7 +415,7 @@ body {
 
 @media (max-width: 480px) {
   /* Brand name smaller on very small screens */
-  .brand-text h1 { font-size: 17px; letter-spacing: 2px; }
+  .brand-text h1 { font-size: 18px; letter-spacing: 2px; }
 
   /* Hero text */
   .hero-content h1 { letter-spacing: -1.5px; }
@@ -505,7 +501,6 @@ body {
 @media (max-width: 640px) {
   .footer { flex-direction: column; gap: 16px; text-align: center; }
 }
-
 
 /* =========================
    PURCHASE MODAL
@@ -694,7 +689,6 @@ body {
   transition: color 0.15s;
 }
 .modal-close:hover { color: rgba(255,255,255,0.6); }
-
 
 /* =========================
    LIGHTBOX
