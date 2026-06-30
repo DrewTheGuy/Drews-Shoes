@@ -618,7 +618,10 @@ function switchMainTab(tab) {
 function switchStatus(status) {
   currentStatus = status;
   selectedIds.clear();
-  // status pills re-rendered in renderList
+  // directly update pill classes without waiting for renderList
+  document.querySelectorAll(".status-pill").forEach(btn => {
+    btn.classList.toggle("active", btn.textContent.toLowerCase() === status);
+  });
   updateBulkBar();
   renderList();
 }
