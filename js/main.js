@@ -29,19 +29,21 @@ async function fetchProducts() {
   });
   if (!res.ok) throw new Error("Failed to fetch products");
   const rows = await res.json();
-  return rows.map(r => ({
-    id: r.id,
-    name: r.name,
-    category: r.category,
-    size: r.size,
-    meta: r.meta,
-    price: r.price,
-    status: r.stock <= 0 ? "sold" : r.status,
-    image: r.image,
-    images: (() => { try { return JSON.parse(r.images); } catch(e) { return [r.image]; } })(),
-    stripeLink: r.stripe_link,
-    stock: r.stock
-  }));
+  return rows
+    .filter(r => r.status === "in-stock" || r.status === "active")
+    .map(r => ({
+      id: r.id,
+      name: r.name,
+      category: r.category,
+      size: r.size,
+      meta: r.meta,
+      price: r.price,
+      status: r.stock <= 0 ? "sold" : r.status,
+      image: r.image,
+      images: (() => { try { return JSON.parse(r.images); } catch(e) { return [r.image]; } })(),
+      stripeLink: r.stripe_link,
+      stock: r.stock
+    }));
 }
 
 // ================================
