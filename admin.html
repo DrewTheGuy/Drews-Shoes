@@ -308,7 +308,10 @@
         </div>
         <div class="form-group">
           <label>Price</label>
-          <input type="text" id="inputPrice" placeholder="e.g. $240">
+          <div style="display:flex; align-items:center; gap:0;">
+            <span style="padding:10px 10px 10px 12px; background:#f0f0f0; border:1px solid #ddd; border-right:none; border-radius:8px 0 0 8px; font-size:13px; color:#555; font-weight:600;">$</span>
+            <input type="number" id="inputPrice" placeholder="0.00" step="0.01" min="0" style="border-radius:0 8px 8px 0; border-left:none;">
+          </div>
         </div>
         <div class="form-group" style="display:none;">
           <label>Status</label>
@@ -426,6 +429,15 @@
         <button class="btn-secondary" style="padding:8px 16px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
       </div>
       <p style="font-size:13px; color:#888; margin-bottom:20px; line-height:1.6;">Every item you mark as sold gets logged here automatically.</p>
+      <div id="archiveBulkRow" style="display:none; padding:10px 14px; background:#fafafa; border-radius:10px; border:1px solid #eee; margin-bottom:8px; flex-wrap:wrap; align-items:center; gap:10px;">
+        <input type="checkbox" class="product-checkbox" id="archiveSelectAll" onchange="toggleArchiveSelectAll(this)">
+        <span style="font-size:12px; font-weight:600; color:#aaa;" id="archiveBulkCount">Select all</span>
+        <div id="archiveBulkActions" style="display:none; gap:6px; flex-wrap:wrap;">
+          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Send to Inactive</button>
+          <button class="bulk-btn" onclick="archiveBulkAction('relist')">Relist All</button>
+          <button class="bulk-btn danger" onclick="archiveBulkAction('delete')">Remove Selected</button>
+        </div>
+      </div>
       <div class="sub-tabs">
         <button class="sub-tab active" onclick="filterArchive('all')">All</button>
         <button class="sub-tab" onclick="filterArchive('sneakers')">Sneakers</button>
@@ -700,7 +712,8 @@ function previewImg(src) {
 
 async function addProduct() {
   const name = document.getElementById("inputName").value.trim();
-  const price = document.getElementById("inputPrice").value.trim();
+  const priceRaw = document.getElementById("inputPrice").value.trim();
+  const price = priceRaw ? "$" + parseFloat(priceRaw).toFixed(0) : "";
   const status = document.getElementById("inputStatus").value;
   const image = document.getElementById("inputImage").value.trim();
   const extra = document.getElementById("inputImages").value.trim().split("\n").map(s => s.trim()).filter(Boolean);
@@ -1316,8 +1329,10 @@ function renderArchive() {
     const meta = s.meta || (s.size ? "Size US " + s.size : "");
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
+    // updateArchiveBulkRow called after join
     return `
-      <div class="product-row">
+      <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
+        <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onchange="toggleArchiveSelect(${s.id})">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name">${s.name}</div>
@@ -1326,10 +1341,12 @@ function renderArchive() {
         </div>
         <div class="product-actions">
           <button class="btn-edit" onclick="openRelistModal(${i})">Relist</button>
+          <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Send to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
       </div>`;
   }).join("");
+  updateArchiveBulkRow();
 }
 
 // CONFIRM MODAL
@@ -1356,6 +1373,122 @@ async function doConfirm() {
       showToast("Something went wrong");
     }
   }
+}
+
+// ARCHIVE SELECTION
+let archiveSelected = new Set();
+
+function updateArchiveBulkRow() {
+  const row = document.getElementById("archiveBulkRow");
+  const actions = document.getElementById("archiveBulkActions");
+  const countEl = document.getElementById("archiveBulkCount");
+  if (!row) return;
+  const count = archiveSelected.size;
+  row.style.display = "flex";
+  if (count > 0) {
+    countEl.textContent = count + " selected";
+    actions.style.display = "flex";
+  } else {
+    countEl.textContent = "Select all";
+    actions.style.display = "none";
+  }
+  const selectAll = document.getElementById("archiveSelectAll");
+  if (selectAll) selectAll.checked = archiveData.length > 0 && archiveData.every(s => archiveSelected.has(s.id));
+}
+
+function toggleArchiveSelect(id) {
+  if (archiveSelected.has(id)) archiveSelected.delete(id);
+  else archiveSelected.add(id);
+  updateArchiveBulkRow();
+}
+
+function toggleArchiveSelectAll(checkbox) {
+  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
+  if (checkbox.checked) filtered.forEach(s => archiveSelected.add(s.id));
+  else archiveSelected.clear();
+  renderArchive();
+  updateArchiveBulkRow();
+}
+
+async function sendArchiveToInactive(id) {
+  const s = archiveData.find(a => a.id === id);
+  if (!s) return;
+  try {
+    const payload = {
+      name: s.name, category: s.category, size: s.size || null,
+      meta: s.meta || null, price: s.price, image: s.image,
+      images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
+      status: "inactive", stock: 0
+    };
+    const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+    await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+    archiveData = archiveData.filter(a => a.id !== id);
+    if (!data[s.category]) data[s.category] = [];
+    data[s.category].push({
+      id: rows[0].id, name: s.name, category: s.category,
+      size: s.size, meta: s.meta, price: s.price,
+      status: "inactive", stock: 0, image: s.image,
+      images: [s.image], stripeLink: s.stripe_link || null
+    });
+    renderArchive();
+    showToast("Moved to Inactive listings!");
+  } catch(e) { showToast("Failed: " + e.message); console.error(e); }
+}
+
+async function archiveBulkAction(action) {
+  if (!archiveSelected.size) return;
+  const ids = [...archiveSelected];
+  let count = 0;
+  for (const id of ids) {
+    const s = archiveData.find(a => a.id === id);
+    if (!s) continue;
+    try {
+      if (action === "inactive") {
+        const payload = {
+          name: s.name, category: s.category, size: s.size || null,
+          meta: s.meta || null, price: s.price, image: s.image,
+          images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
+          status: "inactive", stock: 0
+        };
+        const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+        await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+        archiveData = archiveData.filter(a => a.id !== id);
+        if (!data[s.category]) data[s.category] = [];
+        data[s.category].push({
+          id: rows[0].id, name: s.name, category: s.category,
+          size: s.size, meta: s.meta, price: s.price,
+          status: "inactive", stock: 0, image: s.image,
+          images: [s.image], stripeLink: s.stripe_link || null
+        });
+      } else if (action === "relist") {
+        const payload = {
+          name: s.name, category: s.category, size: s.size || null,
+          meta: s.meta || null, price: s.price, image: s.image,
+          images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
+          status: "in-stock", stock: 1
+        };
+        const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+        await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+        archiveData = archiveData.filter(a => a.id !== id);
+        if (!data[s.category]) data[s.category] = [];
+        data[s.category].push({
+          id: rows[0].id, name: s.name, category: s.category,
+          size: s.size, meta: s.meta, price: s.price,
+          status: "in-stock", stock: 1, image: s.image,
+          images: [s.image], stripeLink: s.stripe_link || null
+        });
+      } else if (action === "delete") {
+        await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+        archiveData = archiveData.filter(a => a.id !== id);
+      }
+      count++;
+    } catch(e) { console.error(e); }
+  }
+  archiveSelected.clear();
+  renderArchive();
+  updateArchiveBulkRow();
+  const msg = action === "inactive" ? "Moved to Inactive!" : action === "relist" ? "Relisted!" : "Removed!";
+  showToast(`${count} item${count > 1 ? 's' : ''} ${msg}`);
 }
 
 // DELETE ARCHIVE ITEM
