@@ -271,16 +271,16 @@
   <!-- PRODUCTS -->
   <div class="tab-panel active" id="panel-products">
     <div class="status-bar" id="statusBar">Loading products...</div>
-    <!-- Status tabs -->
-    <div class="sub-tabs" style="margin-bottom:10px;">
-      <button class="sub-tab active" id="statusTabActive" onclick="switchStatus('active')">Active</button>
-      <button class="sub-tab" id="statusTabInactive" onclick="switchStatus('inactive')">Inactive</button>
-    </div>
     <!-- Category tabs -->
     <div class="sub-tabs">
       <button class="sub-tab active" onclick="switchCategory('sneakers')">Sneakers</button>
       <button class="sub-tab" onclick="switchCategory('streetwear')">Streetwear</button>
       <button class="sub-tab" onclick="switchCategory('cards')">Trading Cards</button>
+    </div>
+    <!-- Status tabs -->
+    <div class="sub-tabs" style="margin-bottom:10px;">
+      <button class="sub-tab active" id="statusTabActive" onclick="switchStatus('active')">Active</button>
+      <button class="sub-tab" id="statusTabInactive" onclick="switchStatus('inactive')">Inactive</button>
     </div>
     <!-- Bulk actions bar -->
     <div class="bulk-bar" id="bulkBar" style="display:none;">
@@ -727,9 +727,9 @@ function renderList() {
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
   const selectAllRow = `
-    <div style="padding:8px 16px; display:flex; align-items:center; gap:10px; background:#f9f9f9; border-radius:10px; margin-bottom:8px; border:1px solid #eee;">
+    <div style="padding:8px 16px; display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:8px;">
+      <span style="font-size:12px; font-weight:600; color:#aaa;">Select all</span>
       <input type="checkbox" class="product-checkbox" ${allSelected ? 'checked' : ''} onchange="toggleSelectAll(this)">
-      <span style="font-size:12px; font-weight:600; color:#888;">Select all ${items.length} ${currentStatus} ${currentCategory}</span>
     </div>`;
 
   list.innerHTML = selectAllRow + items.map((item, i) => {
