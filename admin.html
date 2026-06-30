@@ -333,7 +333,10 @@
           <input type="text" id="inputStripe" placeholder="https://buy.stripe.com/...">
         </div>
       </div>
-      <div style="margin-top:20px;"><button class="btn-primary" onclick="addProduct()">Add Product</button></div>
+      <div style="margin-top:20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+        <button class="btn-primary" onclick="addProduct()">Add Product</button>
+        <span style="font-size:12px; color:#aaa; font-weight:500;">New products are saved to Inactive until you make them live.</span>
+      </div>
     </div>
     <div class="product-list" id="productList"></div>
   </div>
@@ -534,6 +537,32 @@
     <div class="confirm-btns">
       <button class="btn-primary" style="background:#dc2626;" onclick="confirmRemove()">Yes, Remove</button>
       <button class="btn-secondary" onclick="document.getElementById('removeModal').classList.remove('active')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- BULK SOLD CONFIRM MODAL -->
+<div class="modal-overlay" id="bulkSoldModal">
+  <div class="confirm-modal-box">
+    <p class="confirm-title">Mark as Sold?</p>
+    <p class="confirm-message" id="bulkSoldMessage"></p>
+    <p class="confirm-sub">These will be removed from Products and moved to your Sold Archive.</p>
+    <div class="confirm-btns">
+      <button class="btn-primary" onclick="confirmBulkSold()">Yes, Mark as Sold</button>
+      <button class="btn-secondary" onclick="document.getElementById('bulkSoldModal').classList.remove('active')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- BULK REMOVE CONFIRM MODAL -->
+<div class="modal-overlay" id="bulkRemoveModal">
+  <div class="confirm-modal-box">
+    <p class="confirm-title" style="color:#dc2626;">Remove Products?</p>
+    <p class="confirm-message" id="bulkRemoveMessage"></p>
+    <p class="confirm-sub">This permanently deletes the selected products. This cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn-primary" style="background:#dc2626;" onclick="confirmBulkRemove()">Yes, Remove</button>
+      <button class="btn-secondary" onclick="document.getElementById('bulkRemoveModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
 </div>
@@ -834,10 +863,14 @@ async function bulkAction(action) {
   const ids = [...selectedIds];
 
   if (action === "delete") {
-    if (!confirm(`Permanently remove ${ids.length} product(s)?`)) return;
+    document.getElementById("bulkRemoveMessage").textContent = `${ids.length} product${ids.length > 1 ? 's' : ''} will be permanently deleted.`;
+    document.getElementById("bulkRemoveModal").classList.add("active");
+    return;
   }
   if (action === "sold") {
-    if (!confirm(`Mark ${ids.length} product(s) as sold and move to archive?`)) return;
+    document.getElementById("bulkSoldMessage").textContent = `${ids.length} product${ids.length > 1 ? 's' : ''} selected.`;
+    document.getElementById("bulkSoldModal").classList.add("active");
+    return;
   }
 
   let successCount = 0;
@@ -849,26 +882,6 @@ async function bulkAction(action) {
       } else if (action === "inactive") {
         await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: "inactive", stock: 0 }) });
         const item = getItemById(id); if (item) { item.status = "inactive"; item.stock = 0; }
-      } else if (action === "sold") {
-        const item = getItemById(id);
-        if (item) {
-          const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${id}&select=id`);
-          if (!existing.length) {
-            await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
-              product_id: id, name: item.name, category: item.category,
-              size: item.size || null, meta: item.meta || null, price: item.price,
-              sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
-              sold_at: new Date().toISOString()
-            })});
-          }
-          await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
-          data[item.category] = data[item.category].filter(p => p.id !== id);
-        }
-      } else if (action === "delete") {
-        await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
-        for (const cat of Object.keys(data)) {
-          data[cat] = data[cat].filter(p => p.id !== id);
-        }
       }
       successCount++;
     } catch(e) { console.error(e); }
@@ -878,6 +891,52 @@ async function bulkAction(action) {
   updateBulkBar();
   renderList();
   showToast(`${successCount} product(s) updated!`);
+}
+
+async function confirmBulkSold() {
+  document.getElementById("bulkSoldModal").classList.remove("active");
+  const ids = [...selectedIds];
+  let count = 0;
+  for (const id of ids) {
+    try {
+      const item = getItemById(id);
+      if (item) {
+        const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${id}&select=id`);
+        if (!existing.length) {
+          await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
+            product_id: id, name: item.name, category: item.category,
+            size: item.size || null, meta: item.meta || null, price: item.price,
+            sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
+            sold_at: new Date().toISOString()
+          })});
+        }
+        await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
+        data[item.category] = data[item.category].filter(p => p.id !== id);
+        count++;
+      }
+    } catch(e) { console.error(e); }
+  }
+  selectedIds.clear();
+  renderList();
+  showToast(`${count} product${count > 1 ? 's' : ''} moved to Sold Archive!`);
+}
+
+async function confirmBulkRemove() {
+  document.getElementById("bulkRemoveModal").classList.remove("active");
+  const ids = [...selectedIds];
+  let count = 0;
+  for (const id of ids) {
+    try {
+      await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
+      for (const cat of Object.keys(data)) {
+        data[cat] = data[cat].filter(p => p.id !== id);
+      }
+      count++;
+    } catch(e) { console.error(e); }
+  }
+  selectedIds.clear();
+  renderList();
+  showToast(`${count} product${count > 1 ? 's' : ''} removed!`);
 }
 
 // COPY PRODUCT
