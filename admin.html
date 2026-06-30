@@ -942,6 +942,7 @@ async function confirmBulkRemove() {
 // COPY PRODUCT
 async function copyProduct(i) {
   const item = data[currentCategory][i];
+  const isInactive = item.status === "inactive";
   const payload = {
     name: item.name,
     category: item.category,
@@ -951,8 +952,8 @@ async function copyProduct(i) {
     image: item.image,
     images: JSON.stringify(item.images || [item.image]),
     stripe_link: item.stripeLink || null,
-    status: "in-stock",
-    stock: 1
+    status: isInactive ? "inactive" : "in-stock",
+    stock: isInactive ? 0 : 1
   };
   try {
     const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
@@ -960,7 +961,7 @@ async function copyProduct(i) {
     data[currentCategory].push({
       id: newItem.id, name: newItem.name, category: newItem.category,
       size: newItem.size, meta: newItem.meta, price: newItem.price,
-      status: "in-stock", stock: 1, image: newItem.image,
+      status: newItem.status, stock: newItem.stock, image: newItem.image,
       images: item.images || [item.image], stripeLink: newItem.stripe_link
     });
     renderList();
