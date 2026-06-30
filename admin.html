@@ -101,6 +101,16 @@
 
     .sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 
+    .status-pill {
+      padding: 4px 14px; border-radius: 100px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+      font-family: 'Manrope', sans-serif; cursor: pointer;
+      border: 1px solid #ddd; background: #fff; color: #999;
+      transition: all 0.15s;
+    }
+    .status-pill.active { background: #111; color: #fff; border-color: #111; }
+    .status-pill:hover:not(.active) { border-color: #999; color: #555; }
+
     .bulk-bar {
       display: flex; align-items: center; justify-content: space-between;
       background: #111; border-radius: 10px; padding: 10px 16px;
@@ -277,11 +287,8 @@
       <button class="sub-tab" onclick="switchCategory('streetwear')">Streetwear</button>
       <button class="sub-tab" onclick="switchCategory('cards')">Trading Cards</button>
     </div>
-    <!-- Status tabs -->
-    <div class="sub-tabs" style="margin-bottom:10px;">
-      <button class="sub-tab active" id="statusTabActive" onclick="switchStatus('active')">Active</button>
-      <button class="sub-tab" id="statusTabInactive" onclick="switchStatus('inactive')">Inactive</button>
-    </div>
+    <!-- Status tabs rendered in renderList -->
+    <div id="statusTabsContainer"></div>
     <!-- Bulk actions bar -->
     <div class="bulk-bar" id="bulkBar" style="display:none;">
       <div class="bulk-left">
@@ -610,8 +617,7 @@ function switchMainTab(tab) {
 function switchStatus(status) {
   currentStatus = status;
   selectedIds.clear();
-  document.getElementById("statusTabActive").classList.toggle("active", status === "active");
-  document.getElementById("statusTabInactive").classList.toggle("active", status === "inactive");
+  // status pills re-rendered in renderList
   updateBulkBar();
   renderList();
 }
@@ -726,10 +732,17 @@ function renderList() {
   const isSneaker = currentCategory === "sneakers";
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
+  // Render status tabs into container
+  document.getElementById("statusTabsContainer").innerHTML = `
+    <div style="display:flex; gap:6px; margin-bottom:10px;">
+      <button class="status-pill ${currentStatus === 'active' ? 'active' : ''}" onclick="switchStatus('active')">Active</button>
+      <button class="status-pill ${currentStatus === 'inactive' ? 'active' : ''}" onclick="switchStatus('inactive')">Inactive</button>
+    </div>`;
+
   const selectAllRow = `
-    <div style="padding:8px 16px; display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:8px;">
-      <span style="font-size:12px; font-weight:600; color:#aaa;">Select all</span>
+    <div style="padding:8px 12px; display:flex; align-items:center; gap:8px; margin-bottom:8px;">
       <input type="checkbox" class="product-checkbox" ${allSelected ? 'checked' : ''} onchange="toggleSelectAll(this)">
+      <span style="font-size:12px; font-weight:600; color:#aaa;">Select all</span>
     </div>`;
 
   list.innerHTML = selectAllRow + items.map((item, i) => {
