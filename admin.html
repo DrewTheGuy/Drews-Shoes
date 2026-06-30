@@ -290,18 +290,7 @@
     </div>
     <!-- Status tabs rendered in renderList -->
     <div id="statusTabsContainer"></div>
-    <!-- Bulk actions bar -->
-    <div class="bulk-bar" id="bulkBar" style="display:none;">
-      <div class="bulk-left">
-        <span id="bulkCount">0 selected</span>
-      </div>
-      <div class="bulk-actions">
-        <button class="bulk-btn" onclick="bulkAction('active')">Mark as Active</button>
-        <button class="bulk-btn" onclick="bulkAction('inactive')">Mark as Inactive</button>
-        <button class="bulk-btn" onclick="bulkAction('sold')">Mark as Sold</button>
-        <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove Selected</button>
-      </div>
-    </div>
+    <!-- Bulk bar rendered inline with select all -->
     <div class="card">
       <h2>Add Product</h2>
       <div class="form-grid">
@@ -641,16 +630,13 @@ function switchCategory(cat) {
 }
 
 function updateBulkBar() {
-  const bar = document.getElementById("bulkBar");
-  const count = selectedIds.size;
-  bar.style.display = count > 0 ? "flex" : "none";
-  document.getElementById("bulkCount").textContent = count + " selected";
+  // bulk bar is now inline in renderList select all row
 }
 
 function toggleSelect(id) {
   if (selectedIds.has(id)) selectedIds.delete(id);
   else selectedIds.add(id);
-  updateBulkBar();
+  renderList();
 }
 
 function toggleSelectAll(checkbox) {
@@ -743,10 +729,18 @@ function renderList() {
       <button class="status-pill ${currentStatus === 'inactive' ? 'active' : ''}" onclick="switchStatus('inactive')">Inactive</button>
     </div>`;
 
+  const bulkVisible = selectedIds.size > 0;
   const selectAllRow = `
-    <div style="padding:8px 12px; display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:#fafafa; border-radius:10px; border:1px solid #eee; flex-wrap:wrap;">
       <input type="checkbox" class="product-checkbox" ${allSelected ? 'checked' : ''} onchange="toggleSelectAll(this)">
-      <span style="font-size:12px; font-weight:600; color:#aaa;">Select all</span>
+      <span style="font-size:12px; font-weight:600; color:#aaa; margin-right:4px;">${bulkVisible ? selectedIds.size + ' selected' : 'Select all'}</span>
+      ${bulkVisible ? `
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
+          <button class="bulk-btn" onclick="bulkAction('active')">Mark as Active</button>
+          <button class="bulk-btn" onclick="bulkAction('inactive')">Mark as Inactive</button>
+          <button class="bulk-btn" onclick="bulkAction('sold')">Mark as Sold</button>
+          <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
+        </div>` : ''}
     </div>`;
 
   list.innerHTML = selectAllRow + items.map((item, i) => {
