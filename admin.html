@@ -73,6 +73,14 @@
       -webkit-font-smoothing: antialiased;
     }
     .btn-danger:hover { color: #dc2626; border-color: #fca5a5; background: #fff5f5; }
+    .btn-copy {
+      padding: 5px 11px; border-radius: 6px; border: 1px solid #e0e0e0;
+      background: #fff; color: #666; cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      -webkit-font-smoothing: antialiased;
+    }
+    .btn-copy:hover { color: #2563eb; border-color: #93c5fd; background: #eff6ff; }
     .btn-edit {
       padding: 5px 11px; border-radius: 6px; border: 1px solid #e0e0e0;
       background: #fff; color: #666; cursor: pointer;
@@ -373,7 +381,10 @@
   <div class="tab-panel" id="panel-archive">
     <div class="status-bar" id="archiveStatusBar">Loading sold archive...</div>
     <div class="card">
-      <h2>Sold Archive</h2>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <h2 style="margin-bottom:0;">Sold Archive</h2>
+        <button class="btn-secondary" style="padding:8px 16px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
+      </div>
       <p style="font-size:13px; color:#888; margin-bottom:20px; line-height:1.6;">Every item you mark as sold gets logged here automatically.</p>
       <div class="sub-tabs">
         <button class="sub-tab active" onclick="filterArchive('all')">All</button>
@@ -638,6 +649,7 @@ function renderList() {
         <div class="product-price">${item.price}</div>
         <div class="product-actions">
           <button class="btn-status ${isSold ? 'sold' : 'in-stock'}" onclick="openSoldConfirm(${i})">${isSold ? 'Sold' : 'Mark as sold'}</button>
+          <button class="btn-copy" onclick="copyProduct(${i})">Copy</button>
           <button class="btn-edit" onclick="openEdit(${i})">Edit</button>
           <button class="btn-danger" onclick="deleteProduct(${i})">Remove</button>
         </div>
@@ -659,6 +671,61 @@ function renderList() {
         </div>
       </div>`;
   }).join("");
+}
+
+// COPY PRODUCT
+async function copyProduct(i) {
+  const item = data[currentCategory][i];
+  const payload = {
+    name: item.name,
+    category: item.category,
+    size: item.size || null,
+    meta: item.meta || null,
+    price: item.price,
+    image: item.image,
+    images: JSON.stringify(item.images || [item.image]),
+    stripe_link: item.stripeLink || null,
+    status: "in-stock",
+    stock: 1
+  };
+  try {
+    const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+    const newItem = rows[0];
+    data[currentCategory].push({
+      id: newItem.id, name: newItem.name, category: newItem.category,
+      size: newItem.size, meta: newItem.meta, price: newItem.price,
+      status: "in-stock", stock: 1, image: newItem.image,
+      images: item.images || [item.image], stripeLink: newItem.stripe_link
+    });
+    renderList();
+    showToast("Product copied — edit the new listing below!");
+  } catch(e) { showToast("Failed to copy"); console.error(e); }
+}
+
+// EXPORT CSV
+function exportCSV() {
+  if (!archiveData.length) { showToast("No sold items to export"); return; }
+  const headers = ["Name", "Category", "Size / Description", "Listed Price", "Sold For", "Date Sold", "Stripe Link"];
+  const rows = archiveData.map(s => {
+    const meta = s.meta || (s.size ? "Size US " + s.size : "");
+    const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US") : "";
+    return [
+      `"${(s.name || "").replace(/"/g, '""')}"`,
+      s.category || "",
+      `"${meta}"`,
+      s.price || "",
+      s.sold_for || "",
+      date,
+      s.stripe_link || ""
+    ].join(",");
+  });
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "sold-archive-" + new Date().toISOString().split("T")[0] + ".csv";
+  a.click();
+  showToast("CSV downloaded!");
 }
 
 async function markSold(i) {
