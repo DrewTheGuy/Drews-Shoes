@@ -429,15 +429,6 @@
         <button class="btn-secondary" style="padding:8px 16px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
       </div>
       <p style="font-size:13px; color:#888; margin-bottom:20px; line-height:1.6;">Every item you mark as sold gets logged here automatically.</p>
-      <div id="archiveBulkRow" style="display:none; padding:10px 14px; background:#fafafa; border-radius:10px; border:1px solid #eee; margin-bottom:8px; flex-wrap:wrap; align-items:center; gap:10px;">
-        <input type="checkbox" class="product-checkbox" id="archiveSelectAll" onchange="toggleArchiveSelectAll(this)">
-        <span style="font-size:12px; font-weight:600; color:#aaa;" id="archiveBulkCount">Select all</span>
-        <div id="archiveBulkActions" style="display:none; gap:6px; flex-wrap:wrap;">
-          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Send to Inactive</button>
-          <button class="bulk-btn" onclick="archiveBulkAction('relist')">Relist All</button>
-          <button class="bulk-btn danger" onclick="archiveBulkAction('delete')">Remove Selected</button>
-        </div>
-      </div>
       <div class="sub-tabs">
         <button class="sub-tab active" onclick="filterArchive('all')">All</button>
         <button class="sub-tab" onclick="filterArchive('sneakers')">Sneakers</button>
@@ -547,7 +538,7 @@
     <p class="confirm-message" id="removeMessage"></p>
     <p class="confirm-sub">This permanently deletes the product. This cannot be undone.</p>
     <div class="confirm-btns">
-      <button class="btn-primary" style="background:#dc2626;" onclick="confirmRemove()">Yes, Remove</button>
+      <button class="btn-primary" style="background:#dc2626;" onclick="window.pendingArchiveDeleteId ? confirmArchiveDelete() : confirmRemove()">Yes, Remove</button>
       <button class="btn-secondary" onclick="document.getElementById('removeModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
@@ -794,9 +785,7 @@ function renderList() {
       ? `<button class="btn-status in-stock" onclick="changeStatus(${item.id}, 'inactive')">Mark as Inactive</button>`
       : `<button class="btn-status" style="background:#dcfce7;color:#16a34a;" onclick="changeStatus(${item.id}, 'active')">Mark as Active</button>`;
 
-    const soldBtn = isActive
-      ? `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Mark as Sold</button>`
-      : '';
+    const soldBtn = `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Mark as Sold</button>`;
 
     return `
       <div class="product-row" id="row-${item.id}" style="${isChecked ? 'border-color:#111;background:#fafafa;' : ''}">
@@ -1325,11 +1314,24 @@ function renderArchive() {
     return;
   }
 
-  list.innerHTML = filtered.map((s, i) => {
+  const archiveAllSelected = filtered.length > 0 && filtered.every(s => archiveSelected.has(s.id));
+  const archiveBulkVisible = archiveSelected.size > 0;
+  const archiveSelectRow = `
+    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:#fafafa; border-radius:10px; border:1px solid #eee; flex-wrap:wrap;">
+      <input type="checkbox" class="product-checkbox" ${archiveAllSelected ? 'checked' : ''} onchange="toggleArchiveSelectAll(this)">
+      <span style="font-size:12px; font-weight:600; color:#aaa;">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
+      ${archiveBulkVisible ? `
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
+          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Send to Inactive</button>
+          <button class="bulk-btn" onclick="archiveBulkAction('relist')">Relist All</button>
+          <button class="bulk-btn danger" onclick="archiveBulkAction('delete')">Remove Selected</button>
+        </div>` : ''}
+    </div>`;
+
+  list.innerHTML = archiveSelectRow + filtered.map((s, i) => {
     const meta = s.meta || (s.size ? "Size US " + s.size : "");
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
-    // updateArchiveBulkRow called after join
     return `
       <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
         <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onchange="toggleArchiveSelect(${s.id})">
@@ -1492,15 +1494,25 @@ async function archiveBulkAction(action) {
 }
 
 // DELETE ARCHIVE ITEM
-async function deleteArchiveItem(id) {
-  showConfirm("Remove this from the sold archive?", async () => {
-    try {
-      await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
-      archiveData = archiveData.filter(s => s.id !== id);
-      renderArchive();
-      showToast("Removed from archive");
-    } catch(e) { showToast("Failed to remove"); console.error(e); }
-  });
+function deleteArchiveItem(id) {
+  window.pendingArchiveDeleteId = id;
+  const item = archiveData.find(s => s.id === id);
+  document.getElementById("removeMessage").textContent = item ? item.name : "this item";
+  document.getElementById("removeModal").classList.add("active");
+}
+
+async function confirmArchiveDelete() {
+  const id = window.pendingArchiveDeleteId;
+  if (!id) return;
+  document.getElementById("removeModal").classList.remove("active");
+  try {
+    await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+    archiveData = archiveData.filter(s => s.id !== id);
+    archiveSelected.delete(id);
+    window.pendingArchiveDeleteId = null;
+    renderArchive();
+    showToast("Removed from archive");
+  } catch(e) { showToast("Failed to remove"); console.error(e); }
 }
 
 // RELIST MODAL
