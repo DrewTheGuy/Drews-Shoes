@@ -275,7 +275,6 @@
     <button class="main-tab active" onclick="switchMainTab('products')">Products</button>
     <button class="main-tab" onclick="switchMainTab('banner')">Announcement</button>
     <button class="main-tab" onclick="switchMainTab('settings')">Site Settings</button>
-    <button class="main-tab" onclick="switchMainTab('archive')">Sold Archive</button>
     <button class="main-tab" onclick="switchMainTab('dashboard')">Dashboard</button>
   </div>
 
@@ -418,26 +417,6 @@
     </div>
     <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
     <p style="font-size:12px; color:#aaa; margin-top:12px;">Settings are saved locally in this browser for reference.</p>
-  </div>
-
-  <!-- SOLD ARCHIVE -->
-  <div class="tab-panel" id="panel-archive">
-    <div class="status-bar" id="archiveStatusBar">Loading sold archive...</div>
-    <div class="card">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-        <h2 style="margin-bottom:0;">Sold Archive</h2>
-        <button class="btn-secondary" style="padding:8px 16px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
-      </div>
-      <p style="font-size:13px; color:#888; margin-bottom:20px; line-height:1.6;">Every item you mark as sold gets logged here automatically.</p>
-      <div class="sub-tabs">
-        <button class="sub-tab active" onclick="filterArchive('all')">All</button>
-        <button class="sub-tab" onclick="filterArchive('sneakers')">Sneakers</button>
-        <button class="sub-tab" onclick="filterArchive('streetwear')">Streetwear</button>
-        <button class="sub-tab" onclick="filterArchive('cards')">Trading Cards</button>
-      </div>
-      <div id="archiveStats" style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;"></div>
-      <div class="product-list" id="archiveList"></div>
-    </div>
   </div>
 
   <!-- DASHBOARD -->
@@ -627,7 +606,7 @@ let selectedIds = new Set();
 // MAIN TABS
 function switchMainTab(tab) {
   document.querySelectorAll(".main-tab").forEach((t, i) => {
-    t.classList.toggle("active", ["products","banner","settings","archive","dashboard"][i] === tab);
+    t.classList.toggle("active", ["products","banner","settings","dashboard"][i] === tab);
   });
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.getElementById("panel-" + tab).classList.add("active");
@@ -1414,8 +1393,15 @@ function toggleArchiveSelect(id) {
   updateArchiveBulkRow();
 }
 
+function setArchiveFilter(cat) {
+  archiveFilter = cat;
+  archiveSelected.clear();
+  renderList();
+}
+
 function toggleArchiveSelectAll(checkbox) {
-  if (checkbox.checked) archiveData.forEach(s => archiveSelected.add(s.id));
+  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
+  if (checkbox.checked) filtered.forEach(s => archiveSelected.add(s.id));
   else archiveSelected.clear();
   renderList();
 }
@@ -1503,7 +1489,7 @@ async function archiveBulkAction(action) {
 
 // RENDER ARCHIVE INLINE (in products list area when archive tab selected)
 function renderArchiveInline(list) {
-  const filtered = archiveData;  // archive shows all categories, use export CSV for filtering
+  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
 
   // Stats
   const total = archiveData.length;
@@ -1511,13 +1497,21 @@ function renderArchiveInline(list) {
     const n = parseFloat((s.price || "").replace(/[^0-9.]/g, ""));
     return a + (isNaN(n) ? 0 : n);
   }, 0);
+
   const statsHtml = `
     <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
       <div class="stat-box"><div class="stat-value">${total}</div><div class="stat-label">Total Sold</div></div>
       <div class="stat-box"><div class="stat-value green">$${revenue.toFixed(0)}</div><div class="stat-label">Total Revenue</div></div>
-      <div style="display:flex; align-items:center; justify-content:flex-end;">
-        <button class="btn-secondary" style="padding:8px 14px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
+      <div class="stat-box"><div class="stat-value">${archiveData.filter(s=>s.category==='sneakers').length}</div><div class="stat-label">Sneakers Sold</div></div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <button class="status-pill ${archiveFilter==='all'?'active':''}" onclick="setArchiveFilter('all')">All</button>
+        <button class="status-pill ${archiveFilter==='sneakers'?'active':''}" onclick="setArchiveFilter('sneakers')">Sneakers</button>
+        <button class="status-pill ${archiveFilter==='streetwear'?'active':''}" onclick="setArchiveFilter('streetwear')">Streetwear</button>
+        <button class="status-pill ${archiveFilter==='cards'?'active':''}" onclick="setArchiveFilter('cards')">Cards</button>
       </div>
+      <button class="btn-secondary" style="padding:7px 14px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
     </div>`;
 
   const archiveAllSelected = filtered.length > 0 && filtered.every(s => archiveSelected.has(s.id));
