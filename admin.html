@@ -709,7 +709,7 @@ async function addProduct() {
   try {
     const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
     data[currentCategory].push(normalize(rows[0]));
-    renderList(); clearForm(); showToast("Product added!");
+    renderList(); clearForm(); showToast("Product added to Inactive listings!");
   } catch(e) { showToast("Failed to add product"); console.error(e); }
 }
 
@@ -799,20 +799,20 @@ function renderList() {
           <button class="btn-danger" onclick="deleteProduct_id(${item.id})">Remove</button>
         </div>
       </div>
-      <div class="edit-form" id="edit-${i}" style="display:none;">
+      <div class="edit-form" id="edit-${item.id}" style="display:none;">
         <div class="form-grid">
-          <div class="form-group full"><label>Product Name</label><input type="text" id="edit-name-${i}" value="${item.name.replace(/"/g, '&quot;')}"></div>
+          <div class="form-group full"><label>Product Name</label><input type="text" id="edit-name-${item.id}" value="${item.name.replace(/"/g, '&quot;')}"></div>
           ${isSneaker
-            ? `<div class="form-group"><label>Size (US)</label><input type="number" id="edit-size-${i}" step="0.5" value="${item.size || ''}"></div>`
-            : `<div class="form-group"><label>Size / Description</label><input type="text" id="edit-meta-${i}" value="${(item.meta || '').replace(/"/g, '&quot;')}"></div>`}
-          <div class="form-group"><label>Price</label><input type="text" id="edit-price-${i}" value="${item.price}"></div>
-          <div class="form-group"><label>Stock</label><input type="number" id="edit-stock-${i}" value="${item.stock ?? 1}" min="0"></div>
-          <div class="form-group full"><label>Image URL</label><input type="text" id="edit-image-${i}" value="${item.image}"></div>
-          <div class="form-group full"><label>Stripe Payment Link</label><input type="text" id="edit-stripe-${i}" value="${item.stripeLink || ''}" placeholder="https://buy.stripe.com/..."></div>
+            ? `<div class="form-group"><label>Size (US)</label><input type="number" id="edit-size-${item.id}" step="0.5" value="${item.size || ''}"></div>`
+            : `<div class="form-group"><label>Size / Description</label><input type="text" id="edit-meta-${item.id}" value="${(item.meta || '').replace(/"/g, '&quot;')}"></div>`}
+          <div class="form-group"><label>Price</label><input type="text" id="edit-price-${item.id}" value="${item.price}"></div>
+          <div class="form-group"><label>Stock</label><input type="number" id="edit-stock-${item.id}" value="${item.stock ?? 1}" min="0"></div>
+          <div class="form-group full"><label>Image URL</label><input type="text" id="edit-image-${item.id}" value="${item.image}"></div>
+          <div class="form-group full"><label>Stripe Payment Link</label><input type="text" id="edit-stripe-${item.id}" value="${item.stripeLink || ''}" placeholder="https://buy.stripe.com/..."></div>
         </div>
         <div style="display:flex; gap:8px; margin-top:16px;">
-          <button class="btn-primary" style="padding:10px 18px; margin:0;" onclick="saveEdit(${i})">Save</button>
-          <button class="btn-secondary" style="padding:10px 18px;" onclick="closeEdit(${i})">Cancel</button>
+          <button class="btn-primary" style="padding:10px 18px; margin:0;" onclick="saveEdit_id(${item.id})">Save</button>
+          <button class="btn-secondary" style="padding:10px 18px;" onclick="closeEdit_id(${item.id})">Cancel</button>
         </div>
       </div>`;
   }).join("");
@@ -828,7 +828,7 @@ async function changeStatus(id, newStatus) {
     selectedIds.delete(id);
     updateBulkBar();
     renderList();
-    showToast(newStatus === "active" ? "Now live on site!" : "Moved to inactive");
+    showToast(newStatus === "active" ? "Moved to Active!" : "Moved to Inactive!");
   } catch(e) { showToast("Failed to update"); console.error(e); }
 }
 
@@ -844,8 +844,6 @@ function openSoldConfirm_id(id) {
 }
 
 function copyProduct_id(id) { copyProduct(getIndexById(id)); }
-
-function openEdit_id(id) { openEdit(getIndexById(id)); }
 
 function deleteProduct_id(id) {
   window.pendingRemoveIndex = getIndexById(id);
@@ -1087,35 +1085,51 @@ async function confirmRemove() {
   } catch(e) { showToast("Failed to delete"); console.error(e); }
 }
 
+function openEdit_id(id) {
+  document.getElementById("edit-" + id).style.display = "block";
+  document.getElementById("row-" + id).style.borderBottomLeftRadius = "0";
+  document.getElementById("row-" + id).style.borderBottomRightRadius = "0";
+}
+
+function closeEdit_id(id) {
+  document.getElementById("edit-" + id).style.display = "none";
+  document.getElementById("row-" + id).style.borderBottomLeftRadius = "";
+  document.getElementById("row-" + id).style.borderBottomRightRadius = "";
+}
+
 function openEdit(i) {
-  document.getElementById("edit-" + i).style.display = "block";
-  document.getElementById("row-" + i).style.borderBottomLeftRadius = "0";
-  document.getElementById("row-" + i).style.borderBottomRightRadius = "0";
+  const item = data[currentCategory][i];
+  if (item) openEdit_id(item.id);
 }
 
 function closeEdit(i) {
-  document.getElementById("edit-" + i).style.display = "none";
-  document.getElementById("row-" + i).style.borderBottomLeftRadius = "";
-  document.getElementById("row-" + i).style.borderBottomRightRadius = "";
+  const item = data[currentCategory][i];
+  if (item) closeEdit_id(item.id);
+}
+
+async function saveEdit_id(id) {
+  const item = getItemById(id);
+  if (!item) return;
+  const name = document.getElementById("edit-name-" + id).value.trim();
+  const price = document.getElementById("edit-price-" + id).value.trim();
+  const image = document.getElementById("edit-image-" + id).value.trim();
+  const stripeVal = document.getElementById("edit-stripe-" + id).value.trim();
+  const stock = parseInt(document.getElementById("edit-stock-" + id).value) || 0;
+  const payload = { name, price, image, images: JSON.stringify(image ? [image] : []), stripe_link: stripeVal || null, stock, status: item.status };
+  if (item.category === "sneakers") payload.size = parseFloat(document.getElementById("edit-size-" + id).value) || item.size;
+  else payload.meta = document.getElementById("edit-meta-" + id).value.trim();
+  try {
+    await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+    Object.assign(item, { name, price, image, images: [image], stripeLink: stripeVal || null, stock });
+    if (payload.size) item.size = payload.size;
+    if (payload.meta !== undefined) item.meta = payload.meta;
+    closeEdit_id(id); renderList(); showToast("Saved!");
+  } catch(e) { showToast("Failed to save"); console.error(e); }
 }
 
 async function saveEdit(i) {
   const item = data[currentCategory][i];
-  const name = document.getElementById("edit-name-" + i).value.trim();
-  const price = document.getElementById("edit-price-" + i).value.trim();
-  const image = document.getElementById("edit-image-" + i).value.trim();
-  const stripeVal = document.getElementById("edit-stripe-" + i).value.trim();
-  const stock = parseInt(document.getElementById("edit-stock-" + i).value) || 0;
-  const payload = { name, price, image, images: JSON.stringify(image ? [image] : []), stripe_link: stripeVal || null, stock, status: stock <= 0 ? "sold" : item.status };
-  if (currentCategory === "sneakers") payload.size = parseFloat(document.getElementById("edit-size-" + i).value) || item.size;
-  else payload.meta = document.getElementById("edit-meta-" + i).value.trim();
-  try {
-    await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "PATCH", body: JSON.stringify(payload) });
-    Object.assign(item, { name, price, image, images: [image], stripeLink: stripeVal || null, stock, status: payload.status });
-    if (payload.size) item.size = payload.size;
-    if (payload.meta !== undefined) item.meta = payload.meta;
-    closeEdit(i); renderList(); showToast("Saved!");
-  } catch(e) { showToast("Failed to save"); console.error(e); }
+  if (item) await saveEdit_id(item.id);
 }
 
 // BANNER
