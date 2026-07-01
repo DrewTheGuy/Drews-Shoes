@@ -1725,11 +1725,11 @@ function renderArchive() {
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name" style="color:var(--text);">${s.name}</div>
-          <div class="product-meta">${meta} · ${s.category}${date ? " · " + date : ""}</div>
-          <div class="product-meta" style="margin-top:2px;">${soldFor}</div>
+          <div class="product-meta">${meta}${date ? ' · ' + date : ''}</div>
         </div>
         <div class="product-price">${s.price}</div>
         <div class="product-actions">
+          <button class="btn-edit" onclick="openArchiveEdit(${s.id})">Edit</button>
           <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
@@ -1807,6 +1807,47 @@ function toggleArchiveSelectAll(checkbox) {
   if (checkbox.checked) filtered.forEach(s => archiveSelected.add(s.id));
   else archiveSelected.clear();
   renderList();
+}
+
+// ARCHIVE EDIT
+function openArchiveEdit(id) {
+  document.getElementById("archive-edit-" + id).style.display = "block";
+  const row = document.getElementById("archive-row-" + id);
+  if (row) { row.style.borderBottomLeftRadius = "0"; row.style.borderBottomRightRadius = "0"; }
+}
+
+function closeArchiveEdit(id) {
+  document.getElementById("archive-edit-" + id).style.display = "none";
+  const row = document.getElementById("archive-row-" + id);
+  if (row) { row.style.borderBottomLeftRadius = ""; row.style.borderBottomRightRadius = ""; }
+}
+
+async function saveArchiveEdit(id) {
+  const s = archiveData.find(a => a.id === id);
+  if (!s) return;
+  const name = document.getElementById("ae-name-" + id).value.trim();
+  const priceRaw = document.getElementById("ae-price-" + id).value.trim().replace(/[^0-9.]/g, "");
+  const price = priceRaw ? "$" + formatPrice(priceRaw) : s.price;
+  const image = document.getElementById("ae-image-" + id).value.trim();
+  const stripeEl = document.getElementById("ae-stripe-" + id);
+  const stripe = stripeEl ? stripeEl.value.trim() : s.stripe_link;
+  const payload = { name, price, image, stripe_link: stripe || null };
+  if (s.category === "sneakers") {
+    const sizeEl = document.getElementById("ae-size-" + id);
+    if (sizeEl) { const sz = parseFloat(sizeEl.value); if (sz) payload.size = sz; }
+  } else {
+    const metaEl = document.getElementById("ae-meta-" + id);
+    if (metaEl) payload.meta = metaEl.value.trim();
+  }
+  try {
+    await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+    Object.assign(s, { name, price, image, stripe_link: stripe || null });
+    if (payload.size) s.size = payload.size;
+    if (payload.meta !== undefined) s.meta = payload.meta;
+    closeArchiveEdit(id);
+    renderList();
+    showToast("Saved!");
+  } catch(e) { showToast("Failed to save"); console.error(e); }
 }
 
 async function sendArchiveToActive(id) {
@@ -1964,11 +2005,11 @@ function renderArchiveInline(list) {
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name" style="color:var(--text);">${s.name}</div>
-          <div class="product-meta">${meta} · ${s.category}${date ? " · " + date : ""}</div>
-          <div class="product-meta" style="margin-top:2px;">${soldFor}</div>
+          <div class="product-meta">${meta}${date ? ' · ' + date : ''}</div>
         </div>
         <div class="product-price">${s.price}</div>
         <div class="product-actions">
+          <button class="btn-edit" onclick="openArchiveEdit(${s.id})">Edit</button>
           <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
