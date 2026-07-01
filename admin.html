@@ -555,7 +555,7 @@
 <div class="modal-overlay" id="relistModal" onclick="if(event.target===this)closeRelistModal()">
   <div class="relist-modal">
     <h2>Relist Product</h2>
-    <p style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.5;">Edit details if needed then relist. This will remove it from the Sold Archive and add it back to Products.</p>
+    <p style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.5;">Edit details if needed then relist. This will remove it from the Sold Archive and add it back to Active listings.</p>
     <input type="hidden" id="relistId">
     <input type="hidden" id="relistCategory">
     <div class="form-grid">
@@ -1276,13 +1276,14 @@ async function loadArchive() {
 
 function filterArchive(cat) {
   archiveFilter = cat;
-  document.querySelectorAll("#panel-archive .sub-tab").forEach((t, i) => {
-    t.classList.toggle("active", ["all","sneakers","streetwear","cards"][i] === cat);
-  });
-  renderArchive();
+  // filter pills re-rendered in renderArchiveInline
+  archiveFilter = cat;
+  renderList();
 }
 
 function renderArchive() {
+  // Legacy - redirect to renderList if on archive tab
+  if (currentStatus === "archive") { renderList(); return; }
   const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
   const list = document.getElementById("archiveList");
   const statsEl = document.getElementById("archiveStats");
@@ -1351,7 +1352,6 @@ function renderArchive() {
         </div>
       </div>`;
   }).join("");
-  updateArchiveBulkRow();
 }
 
 // CONFIRM MODAL
@@ -1384,27 +1384,13 @@ async function doConfirm() {
 let archiveSelected = new Set();
 
 function updateArchiveBulkRow() {
-  const row = document.getElementById("archiveBulkRow");
-  const actions = document.getElementById("archiveBulkActions");
-  const countEl = document.getElementById("archiveBulkCount");
-  if (!row) return;
-  const count = archiveSelected.size;
-  row.style.display = "flex";
-  if (count > 0) {
-    countEl.textContent = count + " selected";
-    actions.style.display = "flex";
-  } else {
-    countEl.textContent = "Select all";
-    actions.style.display = "none";
-  }
-  const selectAll = document.getElementById("archiveSelectAll");
-  if (selectAll) selectAll.checked = archiveData.length > 0 && archiveData.every(s => archiveSelected.has(s.id));
+  // No-op — bulk row is now rendered inline in renderArchiveInline/renderList
 }
 
 function toggleArchiveSelect(id) {
   if (archiveSelected.has(id)) archiveSelected.delete(id);
   else archiveSelected.add(id);
-  updateArchiveBulkRow();
+  renderList();
 }
 
 function setArchiveFilter(cat) {
@@ -1636,7 +1622,7 @@ async function confirmArchiveDelete() {
     archiveData = archiveData.filter(s => s.id !== id);
     archiveSelected.delete(id);
     window.pendingArchiveDeleteId = null;
-    renderArchive();
+    renderList();
     showToast("Removed from archive");
   } catch(e) { showToast("Failed to remove"); console.error(e); }
 }
@@ -1691,7 +1677,7 @@ async function confirmRelist() {
     const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
     // Remove from archive
     await sbFetch(`/rest/v1/sold_archive?id=eq.${archiveId}`, { method: "DELETE" });
-    archiveData = archiveData.filter(s => s.id != archiveId);
+    archiveData = archiveData.filter(s => s.id !== parseInt(archiveId));
     // Add to local data
     const newItem = rows[0];
     if (!data[category]) data[category] = [];
@@ -1702,8 +1688,8 @@ async function confirmRelist() {
       images: [newItem.image], stripeLink: newItem.stripe_link
     });
     closeRelistModal();
-    renderArchive();
-    showToast("Relisted successfully!");
+    renderList();
+    showToast("Moved to Active listings!");
   } catch(e) { showToast("Failed to relist"); console.error(e); }
 }
 
