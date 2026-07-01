@@ -230,6 +230,7 @@
       display: inline-block;
     }
     .status-pill.active { background: var(--pill-active-bg) !important; color: var(--pill-active-text) !important; border-color: var(--pill-active-bg) !important; }
+    .pill-count { opacity: 0.6; font-weight: 600; font-size: 10px; }
     .status-pill:hover:not(.active) { border-color: #999 !important; color: #555 !important; }
 
     .bulk-bar {
@@ -501,8 +502,14 @@
       <button class="sub-tab" onclick="switchCategory('streetwear')">Streetwear</button>
       <button class="sub-tab" onclick="switchCategory('cards')">Trading Cards</button>
     </div>
-    <!-- Status tabs rendered in renderList -->
-    <div id="statusTabsContainer"></div>
+    <!-- Status pills - rendered once, updated via switchStatus -->
+    <div id="statusTabsContainer">
+      <div style="display:flex; gap:6px; margin-bottom:10px;">
+        <button class="status-pill active" id="pillActive" onclick="switchStatus('active')">Active <span class="pill-count" id="countActive"></span></button>
+        <button class="status-pill" id="pillInactive" onclick="switchStatus('inactive')">Inactive <span class="pill-count" id="countInactive"></span></button>
+        <button class="status-pill" id="pillArchive" onclick="switchStatus('archive')">History <span class="pill-count" id="countArchive"></span></button>
+      </div>
+    </div>
     <!-- Bulk bar rendered inline with select all -->
     <div class="card" id="addProductCard">
       <h2>Add Product</h2>
@@ -738,6 +745,64 @@
   </div>
 </div>
 
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="addProductModal" onclick="if(event.target===this)closeAddProductModal()">
+  <div class="relist-modal">
+    <h2>Add Product</h2>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Product Name</label>
+        <input type="text" id="inputName" placeholder='e.g. Nike Kobe 5 Protro "Hall of Fame"'>
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="inputCategory" onchange="updateAddFormCategory()">
+          <option value="sneakers">Sneakers</option>
+          <option value="streetwear">Streetwear</option>
+          <option value="cards">Trading Cards</option>
+        </select>
+      </div>
+      <div class="form-group" id="sizeGroup">
+        <label>Size (US)</label>
+        <input type="number" id="inputSize" step="0.5" placeholder="e.g. 10">
+      </div>
+      <div class="form-group" id="metaGroup" style="display:none;">
+        <label>Size / Description</label>
+        <input type="text" id="inputMeta" placeholder="e.g. Size L, Hobby Box">
+      </div>
+      <div class="form-group">
+        <label>Price</label>
+        <div style="display:flex; align-items:center;">
+          <span style="padding:10px 10px 10px 12px; background:var(--surface-alt); border:1px solid var(--border-input); border-right:none; border-radius:8px 0 0 8px; font-size:13px; color:var(--text-muted); font-weight:600;">$</span>
+          <input type="text" id="inputPrice" placeholder="0.00" style="border-radius:0 8px 8px 0; border-left:none;" inputmode="decimal">
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Image Path or URL</label>
+        <div class="img-row">
+          <input type="text" id="inputImage" placeholder="images/products/filename.jpg" oninput="previewImg(this.value)">
+          <img class="img-preview" id="imgPreview" src="" alt="preview">
+        </div>
+      </div>
+      <div class="form-group full">
+        <label>Additional Images (one per line)</label>
+        <textarea id="inputImages" placeholder="images/products/shoe-side.jpg&#10;images/products/shoe-sole.jpg"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Stripe Payment Link (optional)</label>
+        <input type="text" id="inputStripe" placeholder="https://buy.stripe.com/...">
+      </div>
+      <div class="form-group" style="display:none;">
+        <select id="inputStatus"><option value="inactive">Inactive</option></select>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-primary" onclick="addProduct()">Add Product</button>
+      <button class="btn-secondary" onclick="closeAddProductModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- ARCHIVE BULK EDIT MODAL -->
 <div class="modal-overlay" id="archiveBulkEditModal" onclick="if(event.target===this)closeArchiveBulkEditModal()">
   <div class="relist-modal">
@@ -926,9 +991,7 @@ function switchStatus(status) {
   } else {
     renderList();
   }
-  // Scroll to top of list on tab switch
-  const list = document.getElementById("productList");
-  if (list) list.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
 }
 
 function switchCategory(cat) {
@@ -1000,6 +1063,25 @@ async function loadProducts() {
   } catch(e) { setStatus("Could not load products — check connection."); console.error(e); }
 }
 
+function openAddProductModal() {
+  // Set category dropdown to match current tab if not "all"
+  const cat = currentCategory === "all" ? "sneakers" : currentCategory;
+  document.getElementById("inputCategory").value = cat;
+  updateAddFormCategory();
+  document.getElementById("addProductModal").classList.add("active");
+}
+
+function closeAddProductModal() {
+  document.getElementById("addProductModal").classList.remove("active");
+  clearForm();
+}
+
+function updateAddFormCategory() {
+  const cat = document.getElementById("inputCategory").value;
+  document.getElementById("sizeGroup").style.display = cat === "sneakers" ? "" : "none";
+  document.getElementById("metaGroup").style.display = cat !== "sneakers" ? "" : "none";
+}
+
 function previewImg(src) {
   const img = document.getElementById("imgPreview");
   if (src) { img.src = src; img.style.display = "block"; } else img.style.display = "none";
@@ -1017,9 +1099,9 @@ async function addProduct() {
 
   if (!name || !price) { showToast("Name and price are required"); return; }
 
-  const payload = { name, price, status: "inactive", category: currentCategory, image: image || "", images: JSON.stringify(images), stripe_link: stripeLink || null, stock: 0 };
+  const payload = { name, price, status: "inactive", category: document.getElementById("inputCategory").value, image: image || "", images: JSON.stringify(images), stripe_link: stripeLink || null, stock: 0 };
 
-  if (currentCategory === "sneakers") {
+  if (document.getElementById("inputCategory").value === "sneakers") {
     const size = parseFloat(document.getElementById("inputSize").value);
     if (!size) { showToast("Size is required for sneakers"); return; }
     payload.size = size;
@@ -1029,8 +1111,12 @@ async function addProduct() {
 
   try {
     const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
-    data[currentCategory].push(normalize(rows[0]));
-    renderList(); clearForm(); showToast("Product added to Inactive listings!");
+    const addedCat = payload.category;
+    if (!data[addedCat]) data[addedCat] = [];
+    data[addedCat].push(normalize(rows[0]));
+    closeAddProductModal();
+    renderList();
+    showToast("Product added to Inactive listings!");
   } catch(e) { showToast("Failed to add product"); console.error(e); }
 }
 
@@ -1074,18 +1160,17 @@ function renderList() {
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
   // Render status tabs into container
-  // Always count across ALL categories
+  // Update pill counts
   const allProds = Object.values(data).flat();
   const activeCount = allProds.filter(p => p.status === 'active' || p.status === 'in-stock').length;
   const inactiveCount = allProds.filter(p => p.status === 'inactive').length;
   const historyCount = archiveData.length;
-
-  document.getElementById("statusTabsContainer").innerHTML = `
-    <div style="display:flex; gap:6px; margin-bottom:10px;">
-      <button class="status-pill ${currentStatus === 'active' ? 'active' : ''}" onclick="switchStatus('active')">Active <span style="opacity:0.6;font-weight:600;">(${activeCount})</span></button>
-      <button class="status-pill ${currentStatus === 'inactive' ? 'active' : ''}" onclick="switchStatus('inactive')">Inactive <span style="opacity:0.6;font-weight:600;">(${inactiveCount})</span></button>
-      <button class="status-pill ${currentStatus === 'archive' ? 'active' : ''}" onclick="switchStatus('archive')">History <span style="opacity:0.6;font-weight:600;">(${historyCount})</span></button>
-    </div>`;
+  const ca = document.getElementById("countActive");
+  const ci = document.getElementById("countInactive");
+  const ch = document.getElementById("countArchive");
+  if (ca) ca.textContent = "(" + activeCount + ")";
+  if (ci) ci.textContent = "(" + inactiveCount + ")";
+  if (ch) ch.textContent = "(" + historyCount + ")";
 
   const bulkVisible = selectedIds.size > 0;
   const selectAllRow = `
