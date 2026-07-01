@@ -7,7 +7,74 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Manrope', sans-serif; background: #f2f2f2; color: #111; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; min-height: 100vh; }
+
+    :root {
+      --bg: #f2f2f2;
+      --surface: #fff;
+      --surface-alt: #f9f9f9;
+      --border-col: #e8e8e8;
+      --border-input: #ddd;
+      --text: #111;
+      --text-muted: #888;
+      --text-faint: #aaa;
+      --header-bg: #111;
+      --header-text: #fff;
+      --header-muted: rgba(255,255,255,0.45);
+      --card-bg: #fff;
+      --input-bg: #fafafa;
+      --row-bg: #fff;
+      --row-selected: #fafafa;
+      --btn-primary-bg: #111;
+      --btn-primary-text: #fff;
+      --btn-secondary-bg: #ebebeb;
+      --btn-secondary-text: #555;
+      --edit-form-bg: #f9f9f9;
+      --stat-bg: #fff;
+      --quick-link-bg: #fafafa;
+      --quick-link-hover: #f0f0f0;
+      --pill-active-bg: #111;
+      --pill-active-text: #fff;
+      --bulk-text: #111;
+      --modal-overlay: rgba(0,0,0,0.6);
+      --warning-bg: #fff8e1;
+      --warning-border: #f59e0b;
+      --warning-text: #92400e;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface-alt: #222;
+      --border-col: #2a2a2a;
+      --border-input: #333;
+      --text: #f0f0f0;
+      --text-muted: #888;
+      --text-faint: #555;
+      --header-bg: #111;
+      --header-text: #fff;
+      --header-muted: rgba(255,255,255,0.35);
+      --card-bg: #1a1a1a;
+      --input-bg: #222;
+      --row-bg: #1a1a1a;
+      --row-selected: #222;
+      --btn-primary-bg: #f0f0f0;
+      --btn-primary-text: #111;
+      --btn-secondary-bg: #2a2a2a;
+      --btn-secondary-text: #aaa;
+      --edit-form-bg: #222;
+      --stat-bg: #1a1a1a;
+      --quick-link-bg: #1a1a1a;
+      --quick-link-hover: #252525;
+      --pill-active-bg: #f0f0f0;
+      --pill-active-text: #111;
+      --bulk-text: #f0f0f0;
+      --modal-overlay: rgba(0,0,0,0.8);
+      --warning-bg: #2a2200;
+      --warning-border: #92400e;
+      --warning-text: #fbbf24;
+    }
+
+    body { font-family: 'Manrope', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; min-height: 100vh; transition: background 0.2s, color 0.2s; }
 
     .header {
       background: #111; padding: 0 32px; height: 64px;
@@ -20,20 +87,20 @@
 
     .container { max-width: 960px; margin: 0 auto; padding: 36px 24px 80px; }
 
-    .main-tabs { display: flex; gap: 2px; margin-bottom: 32px; border-bottom: 1px solid #ddd; }
+    .main-tabs { display: flex; gap: 2px; margin-bottom: 32px; border-bottom: 1px solid var(--border-col); }
     .main-tab {
       padding: 10px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
       text-transform: uppercase; cursor: pointer; border: none; background: none;
-      color: #999; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
       font-family: 'Manrope', sans-serif; transition: color 0.15s, border-color 0.15s; white-space: nowrap;
     }
-    .main-tab.active { color: #111; border-bottom-color: #111; }
-    .main-tab:hover { color: #111; }
+    .main-tab.active { color: var(--text); border-bottom-color: var(--text); }
+    .main-tab:hover { color: var(--text); }
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .card { background: #fff; border-radius: 14px; padding: 28px; border: 1px solid #e8e8e8; margin-bottom: 20px; }
+    .card { background: var(--card-bg); border-radius: 14px; padding: 28px; border: 1px solid var(--border-col); margin-bottom: 20px; }
     .card h2 { font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #111; margin-bottom: 20px; }
 
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -41,11 +108,11 @@
     .form-group.full { grid-column: 1 / -1; }
     label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #888; }
     input, select, textarea {
-      padding: 10px 12px; border-radius: 8px; border: 1px solid #ddd;
-      font-family: 'Manrope', sans-serif; font-size: 13px; color: #111;
-      background: #fafafa; transition: border-color 0.15s; width: 100%;
+      padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-input);
+      font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--text);
+      background: var(--input-bg); transition: border-color 0.15s; width: 100%;
     }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: #111; background: #fff; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--text); background: var(--surface); }
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
@@ -66,7 +133,7 @@
     .helper { font-size: 11px; color: #aaa; margin-top: 2px; }
 
     .btn-primary {
-      padding: 10px 20px; background: #111; color: #fff; border: none;
+      padding: 10px 20px; background: var(--btn-primary-bg); color: var(--btn-primary-text); border: none;
       border-radius: 8px; font-family: 'Manrope', sans-serif;
       font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
       cursor: pointer; transition: opacity 0.15s;
@@ -74,37 +141,37 @@
     }
     .btn-primary:hover { opacity: 0.78; }
     .btn-secondary {
-      padding: 10px 20px; background: #ebebeb; color: #555; border: none;
+      padding: 10px 20px; background: var(--btn-secondary-bg); color: var(--btn-secondary-text); border: none;
       border-radius: 8px; font-family: 'Manrope', sans-serif;
       font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
       cursor: pointer; transition: background 0.15s;
       -webkit-font-smoothing: antialiased;
     }
-    .btn-secondary:hover { background: #ddd; }
+    .btn-secondary:hover { background: var(--border-input); }
     .btn-danger {
-      padding: 5px 11px; border-radius: 6px; border: 1px solid #ebebeb;
-      background: #fff; color: #ccc; cursor: pointer;
+      padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border-col);
+      background: var(--row-bg); color: var(--text-faint); cursor: pointer;
       font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
       transition: color 0.15s, border-color 0.15s;
       -webkit-font-smoothing: antialiased;
     }
     .btn-danger:hover { color: #dc2626; border-color: #fca5a5; background: #fff5f5; }
     .btn-copy {
-      padding: 5px 11px; border-radius: 6px; border: 1px solid #e0e0e0;
-      background: #fff; color: #666; cursor: pointer;
+      padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border-col);
+      background: var(--row-bg); color: var(--text-muted); cursor: pointer;
       font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
       -webkit-font-smoothing: antialiased;
     }
     .btn-copy:hover { color: #2563eb; border-color: #93c5fd; background: #eff6ff; }
     .btn-edit {
-      padding: 5px 11px; border-radius: 6px; border: 1px solid #e0e0e0;
-      background: #fff; color: #666; cursor: pointer;
+      padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border-col);
+      background: var(--row-bg); color: var(--text-muted); cursor: pointer;
       font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
       -webkit-font-smoothing: antialiased;
     }
-    .btn-edit:hover { color: #111; border-color: #bbb; background: #f9f9f9; }
+    .btn-edit:hover { color: var(--text); border-color: var(--text-muted); background: var(--surface-alt); }
     .btn-status {
       padding: 5px 11px; border-radius: 6px; border: none; cursor: pointer;
       font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
@@ -121,11 +188,11 @@
       padding: 5px 18px; border-radius: 100px !important;
       font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
       font-family: 'Manrope', sans-serif; cursor: pointer;
-      border: 1.5px solid #ddd !important; background: #fff !important; color: #999 !important;
+      border: 1.5px solid var(--border-input) !important; background: var(--row-bg) !important; color: var(--text-muted) !important;
       transition: all 0.15s;
       display: inline-block;
     }
-    .status-pill.active { background: #111 !important; color: #fff !important; border-color: #111 !important; }
+    .status-pill.active { background: var(--pill-active-bg) !important; color: var(--pill-active-text) !important; border-color: var(--pill-active-bg) !important; }
     .status-pill:hover:not(.active) { border-color: #999 !important; color: #555 !important; }
 
     .bulk-bar {
@@ -133,10 +200,10 @@
       background: #111; border-radius: 10px; padding: 10px 16px;
       margin-bottom: 14px; gap: 12px; flex-wrap: wrap;
     }
-    .bulk-left { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+    .bulk-left { font-size: 12px; font-weight: 700; color: var(--bulk-text); letter-spacing: 0.5px; }
     .bulk-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .bulk-btn {
-      padding: 5px 12px; border-radius: 6px; border: 1px solid #ddd;
+      padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border-input);
       background: #fff; color: #444; cursor: pointer;
       font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
       transition: all 0.15s; white-space: nowrap;
@@ -151,31 +218,31 @@
     }
     .sub-tab {
       padding: 7px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
-      text-transform: uppercase; cursor: pointer; border: 1px solid #ddd;
+      text-transform: uppercase; cursor: pointer; border: 1px solid var(--border-input);
       background: #fff; color: #999; border-radius: 6px;
       font-family: 'Manrope', sans-serif; transition: all 0.15s;
     }
-    .sub-tab.active { background: #111; color: #fff; border-color: #111; }
-    .sub-tab:hover:not(.active) { color: #111; border-color: #111; }
+    .sub-tab.active { background: var(--pill-active-bg); color: var(--pill-active-text); border-color: var(--pill-active-bg); }
+    .sub-tab:hover:not(.active) { color: var(--text); border-color: var(--text); }
 
     .product-list { display: flex; flex-direction: column; gap: 10px; }
     .product-row {
-      background: #fff; border-radius: 12px; border: 1px solid #e8e8e8;
+      background: var(--row-bg); border-radius: 12px; border: 1px solid var(--border-col);
       padding: 14px 16px; display: flex; align-items: center; gap: 14px;
     }
-    .product-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: contain; background: #f5f5f5; flex-shrink: 0; border: 1px solid #eee; }
+    .product-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: contain; background: var(--surface-alt); flex-shrink: 0; border: 1px solid var(--border-col); }
     .product-info { flex: 1; min-width: 0; }
     .product-name { font-size: 13px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .product-meta { font-size: 11px; color: #999; margin-top: 2px; }
     .product-price { font-size: 15px; font-weight: 800; color: #111; flex-shrink: 0; }
     .product-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .edit-form { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; margin-top: -6px; margin-bottom: 4px; }
+    .edit-form { background: var(--edit-form-bg); border: 1px solid var(--border-col); border-radius: 12px; padding: 20px; margin-top: -6px; margin-bottom: 4px; }
 
-    .img-preview { width: 80px; height: 80px; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; background: #fff; display: none; }
+    .img-preview { width: 80px; height: 80px; border-radius: 8px; border: 1px solid var(--border-input); object-fit: contain; background: #fff; display: none; }
     .img-row { display: flex; align-items: center; gap: 12px; }
     .img-row input { flex: 1; }
 
-    .status-bar { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; font-size: 12px; color: #888; font-weight: 600; display: none; }
+    .status-bar { background: var(--row-bg); border: 1px solid var(--border-col); border-radius: 10px; padding: 12px 18px; margin-bottom: 16px; font-size: 12px; color: #888; font-weight: 600; display: none; }
 
     /* BANNER */
     .banner-preview { border-radius: 10px; padding: 14px 20px; text-align: center; font-size: 13px; font-weight: 600; margin-bottom: 20px; border: 2px dashed #ddd; color: #999; transition: all 0.2s; }
@@ -199,7 +266,7 @@
 
     /* PROFIT */
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
-    .stat-box { background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; padding: 20px; text-align: center; }
+    .stat-box { background: var(--row-bg); border-radius: 12px; border: 1px solid var(--border-col); padding: 20px; text-align: center; }
     .stat-value { font-size: 24px; font-weight: 800; color: #111; letter-spacing: -1px; }
     .stat-value.green { color: #16a34a; }
     .stat-value.red { color: #dc2626; }
@@ -216,13 +283,13 @@
     .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 12px 24px; border-radius: 8px; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 9999; }
     .toast.show { opacity: 1; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay { position: fixed; inset: 0; background: var(--modal-overlay); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     .modal-overlay.active { opacity: 1; pointer-events: all; }
-    .relist-modal { background: #fff; border-radius: 16px; padding: 28px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+    .relist-modal { background: var(--card-bg); border-radius: 16px; padding: 28px; width: 90%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
     .relist-modal h2 { font-size: 15px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: #111; margin-bottom: 8px; }
 
     .confirm-modal-box {
-      background: #fff;
+      background: var(--card-bg);
       border-radius: 16px;
       padding: 32px 28px;
       width: 90%; max-width: 400px;
@@ -251,11 +318,11 @@
     .quick-links { display: flex; flex-direction: column; gap: 10px; }
     .quick-link {
       display: flex; align-items: center; gap: 16px;
-      padding: 14px 16px; border-radius: 12px; border: 1px solid #eee;
-      text-decoration: none; background: #fafafa;
+      padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border-col);
+      text-decoration: none; background: var(--quick-link-bg);
       transition: background 0.15s, border-color 0.15s;
     }
-    .quick-link:hover { background: #f0f0f0; border-color: #ddd; }
+    .quick-link:hover { background: var(--quick-link-hover); border-color: var(--border-input); }
     .quick-link-icon {
       width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
@@ -278,7 +345,7 @@
       .container { padding: 20px 12px 80px; }
 
       /* Main tabs - scrollable */
-      .main-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #ddd; }
+      .main-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--border-col); }
       .main-tab { padding: 10px 14px; font-size: 10px; white-space: nowrap; }
 
       /* Cards */
@@ -358,7 +425,13 @@
 
 <header class="header">
   <h1>DREWS SHOES — Admin</h1>
-  <a href="index.html">← View Site</a>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <button id="themeToggle" onclick="toggleTheme()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:6px 12px; color:#fff; font-size:12px; font-weight:600; font-family:'Manrope',sans-serif; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background 0.15s;" aria-label="Toggle dark mode">
+      <span id="themeIcon">☀️</span>
+      <span id="themeLabel">Light</span>
+    </button>
+    <a href="index.html" style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.45); text-decoration:none;">← View Site</a>
+  </div>
 </header>
 
 <div class="container">
@@ -658,7 +731,7 @@
 <div class="modal-overlay" id="bulkEditModal" onclick="if(event.target===this)closeBulkEditModal()">
   <div class="relist-modal">
     <h2>Edit Selected Products</h2>
-    <div style="background:#fff8e1; border:1px solid #f59e0b; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:12px; color:#92400e; font-weight:600;">
+    <div style="background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:12px; color:var(--warning-text); font-weight:600;">
       ⚠ Changes will apply to all <span id="bulkEditCount">0</span> selected products. Leave a field blank to keep existing values.
     </div>
     <div class="form-grid">
@@ -936,9 +1009,9 @@ function renderList() {
 
   const bulkVisible = selectedIds.size > 0;
   const selectAllRow = `
-    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:#fafafa; border-radius:10px; border:1px solid #eee; flex-wrap:wrap;">
+    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:var(--surface-alt); border-radius:10px; border:1px solid var(--border-col); flex-wrap:wrap;">
       <input type="checkbox" class="product-checkbox" ${allSelected ? 'checked' : ''} onchange="toggleSelectAll(this)">
-      <span style="font-size:12px; font-weight:600; color:#aaa; margin-right:4px;">${bulkVisible ? selectedIds.size + ' selected' : 'Select all'}</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-faint); margin-right:4px;">${bulkVisible ? selectedIds.size + ' selected' : 'Select all'}</span>
       ${bulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>` : ''}
@@ -965,7 +1038,7 @@ function renderList() {
         <input type="checkbox" class="product-checkbox" ${isChecked ? 'checked' : ''} onclick="toggleSelect(${item.id}, event)">
         <img class="product-thumb" src="${item.image}" onerror="this.src=''" alt="">
         <div class="product-info">
-          <div class="product-name">${item.name}</div>
+          <div class="product-name" style="color:var(--text);">${item.name}</div>
           <div class="product-meta">${meta}${item.stripeLink ? ' &middot; <span style="color:#635bff;font-weight:700;">Stripe ✓</span>' : ''}</div>
         </div>
         <div class="product-price">${item.price}</div>
@@ -1583,9 +1656,9 @@ function renderArchive() {
   const archiveAllSelected = filtered.length > 0 && filtered.every(s => archiveSelected.has(s.id));
   const archiveBulkVisible = archiveSelected.size > 0;
   const archiveSelectRow = `
-    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:#fafafa; border-radius:10px; border:1px solid #eee; flex-wrap:wrap;">
+    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:var(--surface-alt); border-radius:10px; border:1px solid var(--border-col); flex-wrap:wrap;">
       <input type="checkbox" class="product-checkbox" ${archiveAllSelected ? 'checked' : ''} onchange="toggleArchiveSelectAll(this)">
-      <span style="font-size:12px; font-weight:600; color:#aaa;">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-faint);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
@@ -1597,13 +1670,13 @@ function renderArchive() {
   list.innerHTML = archiveSelectRow + filtered.map((s, i) => {
     const meta = s.meta || (s.size ? "Size US " + s.size : "");
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
-    const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
+    const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:var(--text-faint);">Listed at ${s.price}</span>`;
     return `
       <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
         <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onclick="toggleArchiveSelect(${s.id}, event)">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
-          <div class="product-name">${s.name}</div>
+          <div class="product-name" style="color:var(--text);">${s.name}</div>
           <div class="product-meta">${meta} · ${s.category}${date ? " · " + date : ""}</div>
           <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
@@ -1816,9 +1889,9 @@ function renderArchiveInline(list) {
   const archiveAllSelected = filtered.length > 0 && filtered.every(s => archiveSelected.has(s.id));
   const archiveBulkVisible = archiveSelected.size > 0;
   const archiveSelectRow = `
-    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:#fafafa; border-radius:10px; border:1px solid #eee; flex-wrap:wrap;">
+    <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:var(--surface-alt); border-radius:10px; border:1px solid var(--border-col); flex-wrap:wrap;">
       <input type="checkbox" class="product-checkbox" ${archiveAllSelected ? 'checked' : ''} onchange="toggleArchiveSelectAll(this)">
-      <span style="font-size:12px; font-weight:600; color:#aaa;">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-faint);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
@@ -1835,13 +1908,13 @@ function renderArchiveInline(list) {
   list.innerHTML = statsHtml + archiveSelectRow + filtered.map((s, i) => {
     const meta = s.meta || (s.size ? "Size US " + s.size : "");
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
-    const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
+    const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:var(--text-faint);">Listed at ${s.price}</span>`;
     return `
       <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
         <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onclick="toggleArchiveSelect(${s.id}, event)">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
-          <div class="product-name">${s.name}</div>
+          <div class="product-name" style="color:var(--text);">${s.name}</div>
           <div class="product-meta">${meta} · ${s.category}${date ? " · " + date : ""}</div>
           <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
@@ -1999,6 +2072,28 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 2500);
 }
 
+// THEME TOGGLE
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const newTheme = isDark ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", newTheme);
+  localStorage.setItem("drews-admin-theme", newTheme);
+  updateThemeButton(newTheme);
+}
+
+function updateThemeButton(theme) {
+  const isDark = theme === "dark";
+  document.getElementById("themeIcon").textContent = isDark ? "🌙" : "☀️";
+  document.getElementById("themeLabel").textContent = isDark ? "Dark" : "Light";
+}
+
+function initTheme() {
+  const saved = localStorage.getItem("drews-admin-theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+  updateThemeButton(saved);
+}
+
+initTheme();
 loadProducts().then(() => loadStats());
 loadSettings();
 
