@@ -257,11 +257,87 @@
     .quick-link-arrow { font-size: 16px; color: #ccc; flex-shrink: 0; }
 
     @media (max-width: 640px) {
+      /* Layout */
       .form-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .header { padding: 0 14px; }
+      .header h1 { font-size: 13px; letter-spacing: 1px; }
+      .container { padding: 20px 12px 80px; }
+
+      /* Main tabs - scrollable */
+      .main-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; border-bottom: 1px solid #ddd; }
+      .main-tab { padding: 10px 14px; font-size: 10px; white-space: nowrap; }
+
+      /* Cards */
+      .card { padding: 18px 14px; }
+      .card h2 { font-size: 12px; margin-bottom: 14px; }
+
+      /* Sub tabs */
+      .sub-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; gap: 5px; padding-bottom: 4px; }
+      .sub-tab { white-space: nowrap; padding: 6px 12px; font-size: 10px; }
+      .status-pill { padding: 4px 12px; font-size: 10px; }
+
+      /* Product rows - stack cleanly */
+      .product-row { flex-wrap: wrap; gap: 10px; padding: 12px; }
+      .product-thumb { width: 48px; height: 48px; }
+      .product-info { flex: 1; min-width: 0; }
+      .product-name { font-size: 12px; }
+      .product-meta { font-size: 10px; }
+      .product-price { font-size: 14px; order: 3; }
+      .product-actions { width: 100%; display: flex; flex-wrap: wrap; gap: 5px; order: 4; }
+      .product-actions button { flex: 1; min-width: 70px; font-size: 10px; padding: 7px 6px; text-align: center; }
+
+      /* Bulk bar */
+      .bulk-bar { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+      /* Select all row */
+      .product-checkbox { width: 18px; height: 18px; }
+
+      /* Edit form */
+      .edit-form { padding: 14px; }
+      .edit-form .form-grid { grid-template-columns: 1fr; }
+
+      /* Buttons */
+      .btn-primary, .btn-secondary { padding: 10px 16px; font-size: 11px; }
+
+      /* Confirm modals */
+      .confirm-modal-box { padding: 24px 20px; }
+      .confirm-title { font-size: 16px; }
+      .confirm-btns { flex-direction: column; gap: 8px; }
+      .confirm-btns button { width: 100%; }
+
+      /* Relist modal */
+      .relist-modal { padding: 20px; max-height: 85vh; }
+
+      /* Stats boxes */
+      .stat-box { padding: 14px; }
+      .stat-value { font-size: 20px; }
+
+      /* Quick links */
+      .quick-link { padding: 12px; }
+      .quick-link-icon { width: 36px; height: 36px; }
+      .quick-link-name { font-size: 12px; }
+      .quick-link-desc { display: none; }
+
+      /* Social rows in settings */
+      .social-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .social-label { width: auto; }
+
+      /* Banner preview */
+      .banner-preview { font-size: 12px; padding: 10px; }
+
+      /* Price field with $ prefix */
+      .img-row { flex-wrap: wrap; }
+      .img-preview { width: 60px; height: 60px; }
+
+      /* Archive stats inline */
+      .stat-box[style] { min-width: 0; }
+    }
+
+    @media (max-width: 380px) {
+      .main-tab { padding: 9px 10px; font-size: 9px; }
+      .product-actions button { font-size: 9px; padding: 6px 4px; }
       .stats-grid { grid-template-columns: 1fr; }
-      .header { padding: 0 16px; }
-      .container { padding: 24px 16px 60px; }
-      .product-row { flex-wrap: wrap; }
     }
   </style>
 </head>
