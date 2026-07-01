@@ -609,11 +609,12 @@
       <div class="form-group full">
         <label>Contact Email</label>
         <input type="email" id="settingEmail" placeholder="yourname@email.com">
-        <span class="helper">Used for the Purchase modal email button</span>
+        <span class="helper">Powers the "Email Us" button in the purchase popup when a customer clicks on a product.</span>
       </div>
     </div>
     <div class="card">
       <h2>Social Links</h2>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px; line-height:1.6;">These URLs power the social buttons in your site footer. Leave blank to default to the platform homepage.</p>
       <div class="social-row"><span class="social-label">Instagram</span><input type="text" id="socialIG" placeholder="https://www.instagram.com/yourhandle"></div>
       <div class="social-row"><span class="social-label">YouTube</span><input type="text" id="socialYT" placeholder="https://www.youtube.com/@yourhandle"></div>
       <div class="social-row"><span class="social-label">TikTok</span><input type="text" id="socialTT" placeholder="https://www.tiktok.com/@yourhandle"></div>
@@ -646,7 +647,7 @@
         <div class="stat-box"><div class="stat-value" id="statStreetwear">—</div><div class="stat-label">Streetwear</div></div>
         <div class="stat-box"><div class="stat-value" id="statCards">—</div><div class="stat-label">Trading Cards</div></div>
       </div>
-      <button class="btn-secondary" style="margin-top:4px;" onclick="loadStats()">Refresh Stats</button>
+      <button class="btn-secondary" style="margin-top:4px;" onclick="loadStats().then(()=>showToast('Stats refreshed!'))">Refresh Stats</button>
     </div>
 
     <!-- Quick Links -->
@@ -715,7 +716,7 @@
   <div class="confirm-modal-box">
     <p class="confirm-title">Mark as Sold?</p>
     <p class="confirm-message" id="confirmMessage"></p>
-    <p class="confirm-sub">This will remove it from Products and move it to your Sold Archive.</p>
+    <p class="confirm-sub">This will remove it from Products and move it to your History.</p>
     <div class="confirm-btns">
       <button class="btn-primary" onclick="markSold()">Yes, Move to Sold</button>
       <button class="btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('active')">Cancel</button>
@@ -754,7 +755,7 @@
   <div class="confirm-modal-box">
     <p class="confirm-title">Mark as Sold?</p>
     <p class="confirm-message" id="bulkSoldMessage"></p>
-    <p class="confirm-sub">These will be removed from Products and moved to your Sold Archive.</p>
+    <p class="confirm-sub">These will be removed from Products and moved to your History.</p>
     <div class="confirm-btns">
       <button class="btn-primary" onclick="confirmBulkSold()">Yes, Move to Sold</button>
       <button class="btn-secondary" onclick="document.getElementById('bulkSoldModal').classList.remove('active')">Cancel</button>
@@ -785,31 +786,31 @@
     <div class="form-grid">
       <div class="form-group full">
         <label>Product Name</label>
-        <input type="text" id="bulkEditName" placeholder="Leave blank to keep existing">
+        <input type="text" id="bulkEditName" placeholder='e.g. Nike Kobe 5 Protro "Hall of Fame"'>
       </div>
       <div class="form-group" id="bulkEditSizeRow">
         <label>Size (US)</label>
-        <input type="number" id="bulkEditSize" step="0.5" placeholder="Leave blank to keep existing">
+        <input type="number" id="bulkEditSize" step="0.5" placeholder="e.g. 10">
       </div>
       <div class="form-group" id="bulkEditMetaRow">
         <label>Size / Description</label>
-        <input type="text" id="bulkEditMeta" placeholder="Leave blank to keep existing">
+        <input type="text" id="bulkEditMeta" placeholder="e.g. Size L, Hobby Box">
       </div>
       <div class="form-group">
         <label>Price</label>
-        <input type="text" id="bulkEditPrice" placeholder="Leave blank to keep existing" inputmode="decimal">
+        <input type="text" id="bulkEditPrice" placeholder="e.g. 240" inputmode="decimal">
       </div>
       <div class="form-group">
         <label>Stock</label>
-        <input type="number" id="bulkEditStock" placeholder="Leave blank to keep existing" min="0">
+        <input type="number" id="bulkEditStock" placeholder="e.g. 1" min="0">
       </div>
       <div class="form-group full">
         <label>Image URL</label>
-        <input type="text" id="bulkEditImage" placeholder="Leave blank to keep existing">
+        <input type="text" id="bulkEditImage" placeholder="images/products/filename.jpg">
       </div>
       <div class="form-group full">
         <label>Stripe Payment Link</label>
-        <input type="text" id="bulkEditStripe" placeholder="Leave blank to keep existing">
+        <input type="text" id="bulkEditStripe" placeholder="https://buy.stripe.com/...">
       </div>
     </div>
     <div style="display:flex; gap:10px; margin-top:20px;">
@@ -826,7 +827,7 @@
 <div class="modal-overlay" id="relistModal" onclick="if(event.target===this)closeRelistModal()">
   <div class="relist-modal">
     <h2>Relist Product</h2>
-    <p style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.5;">Edit details if needed then relist. This will remove it from the Sold Archive and add it back to Active listings.</p>
+    <p style="font-size:13px;color:#888;margin-bottom:20px;line-height:1.5;">Edit details if needed then relist. This will remove it from the History and add it back to Active listings.</p>
     <input type="hidden" id="relistId">
     <input type="hidden" id="relistCategory">
     <div class="form-grid">
@@ -1052,7 +1053,7 @@ function renderList() {
     <div style="display:flex; gap:6px; margin-bottom:10px;">
       <button class="status-pill ${currentStatus === 'active' ? 'active' : ''}" onclick="switchStatus('active')">Active</button>
       <button class="status-pill ${currentStatus === 'inactive' ? 'active' : ''}" onclick="switchStatus('inactive')">Inactive</button>
-      <button class="status-pill ${currentStatus === 'archive' ? 'active' : ''}" onclick="switchStatus('archive')">Sold Archive</button>
+      <button class="status-pill ${currentStatus === 'archive' ? 'active' : ''}" onclick="switchStatus('archive')">History</button>
     </div>`;
 
   const bulkVisible = selectedIds.size > 0;
@@ -1284,7 +1285,7 @@ async function confirmBulkSold() {
   selectedIds.clear();
   hideWorking();
   renderList();
-  showToast(`${count} product${count > 1 ? 's' : ''} moved to Sold Archive!`);
+  showToast(`${count} product${count > 1 ? 's' : ''} moved to History!`);
 }
 
 async function confirmBulkRemove() {
@@ -1397,7 +1398,7 @@ async function markSold(i) {
       sold_at: new Date().toISOString()
     });
     renderList();
-    showToast("Moved to Sold Archive!");
+    showToast("Moved to History!");
   } catch(e) { hideWorking(); showToast("Failed: " + e.message); console.error(e); }
 }
 
@@ -1413,7 +1414,7 @@ async function toggleStatus(i) {
   const isSold = item.status !== "sold" && item.stock > 0 ? false : true;
 
   if (!isSold) {
-    showConfirm(`Mark "${item.name}" as sold and move it to the Sold Archive?`, async () => {
+    showConfirm(`Mark "${item.name}" as sold and move it to the History?`, async () => {
       try {
         const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
         if (!existing.length) {
@@ -1434,7 +1435,7 @@ async function toggleStatus(i) {
         await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
         data[currentCategory].splice(i, 1);
         renderList();
-        showToast("Moved to Sold Archive!");
+        showToast("Moved to History!");
       } catch(e) { showToast("Failed: " + e.message); console.error("toggleStatus error:", e); }
     });
   } else {
@@ -1629,10 +1630,14 @@ async function saveSettings() {
 // SITE STATS
 async function loadStats() {
   try {
+    // Re-fetch products from Supabase so stats are always fresh
+    const rows = await sbFetch("/rest/v1/products?select=*&order=id");
+    data = { sneakers: [], streetwear: [], cards: [] };
+    rows.forEach(row => { const item = normalize(row); if (data[item.category]) data[item.category].push(item); });
+
     const allProducts = Object.values(data).flat();
     const total = allProducts.length;
-    const available = allProducts.filter(p => p.status !== "sold" && p.stock > 0).length;
-    // Count sold from sold_archive since sold items are removed from products
+    const available = allProducts.filter(p => p.status !== "sold" && p.status !== "inactive" && p.stock > 0).length;
     const soldRows = await sbFetch("/rest/v1/sold_archive?select=id");
     const sold = soldRows.length;
     document.getElementById("statTotal").textContent = total + sold;
@@ -1967,10 +1972,9 @@ function renderArchiveInline(list) {
   }, 0);
 
   const statsHtml = `
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;">
+    <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px;">
       <div class="stat-box"><div class="stat-value">${total}</div><div class="stat-label">Total Sold</div></div>
       <div class="stat-box"><div class="stat-value green">$${revenue.toFixed(0)}</div><div class="stat-label">Total Revenue</div></div>
-      <div class="stat-box"><div class="stat-value">${archiveData.filter(s=>s.category==='sneakers').length}</div><div class="stat-label">Sneakers Sold</div></div>
     </div>
     <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:12px;">
       <button class="btn-secondary" style="padding:7px 14px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
