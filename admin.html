@@ -42,35 +42,35 @@
     }
 
     [data-theme="dark"] {
-      --bg: #0f0f0f;
-      --surface: #1a1a1a;
-      --surface-alt: #222;
-      --border-col: #2a2a2a;
-      --border-input: #333;
+      --bg: #111;
+      --surface: #1c1c1c;
+      --surface-alt: #242424;
+      --border-col: #2e2e2e;
+      --border-input: #383838;
       --text: #f0f0f0;
-      --text-muted: #888;
-      --text-faint: #555;
-      --header-bg: #111;
+      --text-muted: #999;
+      --text-faint: #666;
+      --header-bg: #0a0a0a;
       --header-text: #fff;
       --header-muted: rgba(255,255,255,0.35);
-      --card-bg: #1a1a1a;
-      --input-bg: #222;
-      --row-bg: #1a1a1a;
-      --row-selected: #222;
+      --card-bg: #1c1c1c;
+      --input-bg: #242424;
+      --row-bg: #1c1c1c;
+      --row-selected: #252525;
       --btn-primary-bg: #f0f0f0;
       --btn-primary-text: #111;
       --btn-secondary-bg: #2a2a2a;
-      --btn-secondary-text: #aaa;
-      --edit-form-bg: #222;
-      --stat-bg: #1a1a1a;
-      --quick-link-bg: #1a1a1a;
+      --btn-secondary-text: #ccc;
+      --edit-form-bg: #242424;
+      --stat-bg: #1c1c1c;
+      --quick-link-bg: #1c1c1c;
       --quick-link-hover: #252525;
       --pill-active-bg: #f0f0f0;
       --pill-active-text: #111;
       --bulk-text: #f0f0f0;
-      --modal-overlay: rgba(0,0,0,0.8);
-      --warning-bg: #2a2200;
-      --warning-border: #92400e;
+      --modal-overlay: rgba(0,0,0,0.85);
+      --warning-bg: #2a2000;
+      --warning-border: #854d0e;
       --warning-text: #fbbf24;
     }
 
@@ -156,6 +156,41 @@
       -webkit-font-smoothing: antialiased;
     }
     .btn-danger:hover { color: #dc2626; border-color: #fca5a5; background: #fff5f5; }
+    [data-theme="dark"] .btn-danger:hover { background: #2a0a0a; border-color: #7f1d1d; }
+    [data-theme="dark"] .btn-edit:hover { color: var(--text); border-color: var(--text-muted); background: var(--surface-alt); }
+    [data-theme="dark"] .card h2 { color: var(--text); }
+    [data-theme="dark"] label { color: var(--text-muted); }
+    [data-theme="dark"] .product-name { color: var(--text); }
+    [data-theme="dark"] .product-meta { color: var(--text-muted); }
+    [data-theme="dark"] .product-price { color: var(--text); }
+    [data-theme="dark"] .confirm-title { color: var(--text); }
+    [data-theme="dark"] .confirm-message { color: var(--text-muted); }
+    [data-theme="dark"] .confirm-sub { color: var(--text-faint); }
+    [data-theme="dark"] .relist-modal h2 { color: var(--text); }
+    [data-theme="dark"] .quick-link-name { color: var(--text); }
+    [data-theme="dark"] .quick-link-desc { color: var(--text-muted); }
+    [data-theme="dark"] .quick-link-arrow { color: var(--text-faint); }
+    [data-theme="dark"] .quick-link { border-color: var(--border-col); }
+    [data-theme="dark"] .stat-value { color: var(--text); }
+    [data-theme="dark"] .stat-label { color: var(--text-muted); }
+    [data-theme="dark"] .helper { color: var(--text-faint); }
+    [data-theme="dark"] .toggle-label { color: var(--text); }
+    [data-theme="dark"] .social-label { color: var(--text-muted); }
+    [data-theme="dark"] .banner-preview { border-color: var(--border-col); }
+    [data-theme="dark"] .empty { color: var(--text-faint); }
+    [data-theme="dark"] .status-bar { color: var(--text-muted); }
+    [data-theme="dark"] .swatch.selected { border-color: #fff; }
+    [data-theme="dark"] .row-loading { opacity: 0.3; }
+    [data-theme="dark"] input::placeholder { color: var(--text-faint); }
+    [data-theme="dark"] textarea::placeholder { color: var(--text-faint); }
+    [data-theme="dark"] select option { background: var(--card-bg); color: var(--text); }
+    [data-theme="dark"] .main-tab { color: var(--text-muted); }
+    [data-theme="dark"] .main-tabs { border-bottom-color: var(--border-col); }
+    [data-theme="dark"] .sub-tab:hover:not(.active) { color: var(--text); border-color: var(--text-muted); }
+    [data-theme="dark"] .bulk-btn { border-color: var(--border-col); background: var(--surface-alt); color: var(--text); }
+    [data-theme="dark"] .bulk-btn:hover { background: var(--row-selected); }
+    [data-theme="dark"] .bulk-btn.danger { color: #fca5a5; border-color: #7f1d1d; background: #1a0808; }
+    [data-theme="dark"] .status-pill:hover:not(.active) { border-color: var(--text-muted) !important; color: var(--text) !important; }
     .btn-copy {
       padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border-col);
       background: var(--row-bg); color: var(--text-muted); cursor: pointer;
@@ -426,9 +461,20 @@
 <header class="header">
   <h1>DREWS SHOES — Admin</h1>
   <div style="display:flex; align-items:center; gap:16px;">
-    <button id="themeToggle" onclick="toggleTheme()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:6px 12px; color:#fff; font-size:12px; font-weight:600; font-family:'Manrope',sans-serif; cursor:pointer; display:flex; align-items:center; gap:6px; transition:background 0.15s;" aria-label="Toggle dark mode">
-      <span id="themeIcon">☀️</span>
-      <span id="themeLabel">Light</span>
+    <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
+      <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:#333; display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
+        <div id="thumbCircle" style="width:22px; height:22px; border-radius:50%; background:#fff; transition:transform 0.25s; display:flex; align-items:center; justify-content:center; transform:translateX(0);">
+          <svg id="sunIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+            <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg id="moonIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round" style="display:none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </div>
+      </div>
     </button>
     <a href="index.html" style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.45); text-decoration:none;">← View Site</a>
   </div>
@@ -2083,8 +2129,14 @@ function toggleTheme() {
 
 function updateThemeButton(theme) {
   const isDark = theme === "dark";
-  document.getElementById("themeIcon").textContent = isDark ? "🌙" : "☀️";
-  document.getElementById("themeLabel").textContent = isDark ? "Dark" : "Light";
+  const sw = document.getElementById("themeSwitch");
+  const thumb = document.getElementById("thumbCircle");
+  const sun = document.getElementById("sunIcon");
+  const moon = document.getElementById("moonIcon");
+  if (sw) sw.style.background = isDark ? "#6d28d9" : "#333";
+  if (thumb) thumb.style.transform = isDark ? "translateX(24px)" : "translateX(0)";
+  if (sun) sun.style.display = isDark ? "none" : "block";
+  if (moon) moon.style.display = isDark ? "block" : "none";
 }
 
 function initTheme() {
