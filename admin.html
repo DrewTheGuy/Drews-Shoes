@@ -1345,7 +1345,7 @@ function renderArchive() {
           <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
         <div class="product-actions">
-          <button class="btn-edit" onclick="openRelistModal(${i})">Move to Active</button>
+          <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
@@ -1418,6 +1418,31 @@ function toggleArchiveSelectAll(checkbox) {
   if (checkbox.checked) filtered.forEach(s => archiveSelected.add(s.id));
   else archiveSelected.clear();
   renderList();
+}
+
+async function sendArchiveToActive(id) {
+  const s = archiveData.find(a => a.id === id);
+  if (!s) return;
+  try {
+    const payload = {
+      name: s.name, category: s.category, size: s.size || null,
+      meta: s.meta || null, price: s.price, image: s.image,
+      images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
+      status: "in-stock", stock: 1
+    };
+    const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+    await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+    archiveData = archiveData.filter(a => a.id !== id);
+    if (!data[s.category]) data[s.category] = [];
+    data[s.category].push({
+      id: rows[0].id, name: s.name, category: s.category,
+      size: s.size, meta: s.meta, price: s.price,
+      status: "in-stock", stock: 1, image: s.image,
+      images: [s.image], stripeLink: s.stripe_link || null
+    });
+    renderList();
+    showToast("Moved to Active!");
+  } catch(e) { showToast("Failed: " + e.message); console.error(e); }
 }
 
 async function sendArchiveToInactive(id) {
@@ -1495,8 +1520,7 @@ async function archiveBulkAction(action) {
     } catch(e) { console.error(e); }
   }
   archiveSelected.clear();
-  renderArchive();
-  updateArchiveBulkRow();
+  renderList();
   const msg = action === "inactive" ? "Moved to Inactive!" : action === "relist" ? "Moved to Active!" : "Removed!";
   showToast(`${count} item${count > 1 ? 's' : ''} — ${msg}`);
 }
@@ -1561,7 +1585,7 @@ function renderArchiveInline(list) {
           <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
         <div class="product-actions">
-          <button class="btn-edit" onclick="openRelistModal(${i})">Move to Active</button>
+          <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
