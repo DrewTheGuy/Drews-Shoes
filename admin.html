@@ -654,6 +654,50 @@
   </div>
 </div>
 
+<!-- BULK EDIT MODAL -->
+<div class="modal-overlay" id="bulkEditModal" onclick="if(event.target===this)closeBulkEditModal()">
+  <div class="relist-modal">
+    <h2>Edit Selected Products</h2>
+    <div style="background:#fff8e1; border:1px solid #f59e0b; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:12px; color:#92400e; font-weight:600;">
+      ⚠ Changes will apply to all <span id="bulkEditCount">0</span> selected products. Leave a field blank to keep existing values.
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Product Name</label>
+        <input type="text" id="bulkEditName" placeholder="Leave blank to keep existing">
+      </div>
+      <div class="form-group" id="bulkEditSizeRow">
+        <label>Size (US)</label>
+        <input type="number" id="bulkEditSize" step="0.5" placeholder="Leave blank to keep existing">
+      </div>
+      <div class="form-group" id="bulkEditMetaRow">
+        <label>Size / Description</label>
+        <input type="text" id="bulkEditMeta" placeholder="Leave blank to keep existing">
+      </div>
+      <div class="form-group">
+        <label>Price</label>
+        <input type="text" id="bulkEditPrice" placeholder="Leave blank to keep existing" inputmode="decimal">
+      </div>
+      <div class="form-group">
+        <label>Stock</label>
+        <input type="number" id="bulkEditStock" placeholder="Leave blank to keep existing" min="0">
+      </div>
+      <div class="form-group full">
+        <label>Image URL</label>
+        <input type="text" id="bulkEditImage" placeholder="Leave blank to keep existing">
+      </div>
+      <div class="form-group full">
+        <label>Stripe Payment Link</label>
+        <input type="text" id="bulkEditStripe" placeholder="Leave blank to keep existing">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-primary" onclick="confirmBulkEdit()">Save Changes</button>
+      <button class="btn-secondary" onclick="closeBulkEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-working" id="toastWorking">Working...</div>
 <div class="toast" id="toast"></div>
 
@@ -899,6 +943,7 @@ function renderList() {
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>` : ''}
           ${currentStatus === 'active' ? `<button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>` : ''}
+          <button class="bulk-btn" onclick="openBulkEditModal()">Edit Selected</button>
           <button class="bulk-btn" onclick="bulkAction('sold')">Move to Sold</button>
           <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
         </div>` : ''}
@@ -1021,6 +1066,68 @@ async function bulkAction(action) {
   updateBulkBar();
   renderList();
   showToast(`${successCount} product(s) updated!`);
+}
+
+// BULK EDIT
+function openBulkEditModal() {
+  if (!selectedIds.size) return;
+  document.getElementById("bulkEditCount").textContent = selectedIds.size;
+  ["bulkEditName","bulkEditSize","bulkEditMeta","bulkEditPrice","bulkEditStock","bulkEditImage","bulkEditStripe"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  const isSneaker = currentCategory === "sneakers";
+  document.getElementById("bulkEditSizeRow").style.display = isSneaker ? "" : "none";
+  document.getElementById("bulkEditMetaRow").style.display = isSneaker ? "none" : "";
+  document.getElementById("bulkEditModal").classList.add("active");
+}
+
+function closeBulkEditModal() {
+  document.getElementById("bulkEditModal").classList.remove("active");
+}
+
+async function confirmBulkEdit() {
+  const ids = [...selectedIds];
+  if (!ids.length) return;
+  const isSneaker = currentCategory === "sneakers";
+  const nameVal = document.getElementById("bulkEditName").value.trim();
+  const priceRaw = document.getElementById("bulkEditPrice").value.trim().replace(/[^0-9.]/g, "");
+  const priceVal = priceRaw ? "$" + formatPrice(priceRaw) : "";
+  const stockVal = document.getElementById("bulkEditStock").value.trim();
+  const imageVal = document.getElementById("bulkEditImage").value.trim();
+  const stripeVal = document.getElementById("bulkEditStripe").value.trim();
+  const sizeVal = isSneaker ? document.getElementById("bulkEditSize").value.trim() : "";
+  const metaVal = !isSneaker ? document.getElementById("bulkEditMeta").value.trim() : "";
+  const payload = {};
+  if (nameVal) payload.name = nameVal;
+  if (priceVal) payload.price = priceVal;
+  if (stockVal !== "") payload.stock = parseInt(stockVal);
+  if (imageVal) { payload.image = imageVal; payload.images = JSON.stringify([imageVal]); }
+  if (stripeVal) payload.stripe_link = stripeVal;
+  if (isSneaker && sizeVal) payload.size = parseFloat(sizeVal);
+  if (!isSneaker && metaVal) payload.meta = metaVal;
+  if (!Object.keys(payload).length) { showToast("No changes to save"); return; }
+  closeBulkEditModal();
+  showWorking();
+  let count = 0;
+  for (const id of ids) {
+    try {
+      await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+      const item = getItemById(id);
+      if (item) Object.assign(item, {
+        ...(payload.name && { name: payload.name }),
+        ...(payload.price && { price: payload.price }),
+        ...(payload.stock !== undefined && { stock: payload.stock }),
+        ...(payload.image && { image: payload.image, images: [payload.image] }),
+        ...(payload.stripe_link && { stripeLink: payload.stripe_link }),
+        ...(payload.size && { size: payload.size }),
+        ...(payload.meta && { meta: payload.meta }),
+      });
+      count++;
+    } catch(e) { console.error(e); }
+  }
+  hideWorking();
+  selectedIds.clear();
+  renderList();
+  showToast(`${count} product${count > 1 ? 's' : ''} updated!`);
 }
 
 async function confirmBulkSold() {
