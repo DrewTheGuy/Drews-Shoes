@@ -1726,8 +1726,9 @@ function renderArchive() {
         <div class="product-info">
           <div class="product-name" style="color:var(--text);">${s.name}</div>
           <div class="product-meta">${meta} · ${s.category}${date ? " · " + date : ""}</div>
-          <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
+          <div class="product-meta" style="margin-top:2px;">${soldFor}</div>
         </div>
+        <div class="product-price">${s.price}</div>
         <div class="product-actions">
           <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
@@ -1964,8 +1965,9 @@ function renderArchiveInline(list) {
         <div class="product-info">
           <div class="product-name" style="color:var(--text);">${s.name}</div>
           <div class="product-meta">${meta} · ${s.category}${date ? " · " + date : ""}</div>
-          <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
+          <div class="product-meta" style="margin-top:2px;">${soldFor}</div>
         </div>
+        <div class="product-price">${s.price}</div>
         <div class="product-actions">
           <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
