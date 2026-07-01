@@ -49,6 +49,19 @@
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
+
+    .row-loading {
+      opacity: 0.45;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+    .toast-working {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #444; color: #fff; padding: 10px 20px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none;
+      transition: opacity 0.15s; z-index: 9998;
+    }
+    .toast-working.show { opacity: 1; }
     textarea { resize: vertical; min-height: 60px; }
     .helper { font-size: 11px; color: #aaa; margin-top: 2px; }
 
@@ -641,6 +654,7 @@
   </div>
 </div>
 
+<div class="toast-working" id="toastWorking">Working...</div>
 <div class="toast" id="toast"></div>
 
 <!-- RELIST MODAL -->
@@ -940,6 +954,7 @@ function renderList() {
 // CHANGE STATUS
 async function changeStatus(id, newStatus) {
   const supaStatus = newStatus === "active" ? "in-stock" : "inactive";
+  showWorking("row-" + id);
   try {
     await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: supaStatus, stock: newStatus === "active" ? 1 : 0 }) });
     const item = Object.values(data).flat().find(p => p.id === id);
@@ -947,8 +962,9 @@ async function changeStatus(id, newStatus) {
     selectedIds.delete(id);
     updateBulkBar();
     renderList();
+    hideWorking("row-" + id);
     showToast(newStatus === "active" ? "Moved to Active!" : "Moved to Inactive!");
-  } catch(e) { showToast("Failed to update"); console.error(e); }
+  } catch(e) { hideWorking("row-" + id); showToast("Failed to update"); console.error(e); }
 }
 
 // ID-BASED WRAPPERS
@@ -1009,6 +1025,7 @@ async function bulkAction(action) {
 
 async function confirmBulkSold() {
   document.getElementById("bulkSoldModal").classList.remove("active");
+  showWorking();
   const ids = [...selectedIds];
   let count = 0;
   for (const id of ids) {
@@ -1037,12 +1054,14 @@ async function confirmBulkSold() {
     } catch(e) { console.error(e); }
   }
   selectedIds.clear();
+  hideWorking();
   renderList();
   showToast(`${count} product${count > 1 ? 's' : ''} moved to Sold Archive!`);
 }
 
 async function confirmBulkRemove() {
   document.getElementById("bulkRemoveModal").classList.remove("active");
+  showWorking();
   const ids = [...selectedIds];
   let count = 0;
   for (const id of ids) {
@@ -1055,6 +1074,7 @@ async function confirmBulkRemove() {
     } catch(e) { console.error(e); }
   }
   selectedIds.clear();
+  hideWorking();
   renderList();
   showToast(`${count} product${count > 1 ? 's' : ''} removed!`);
 }
@@ -1121,6 +1141,7 @@ async function markSold(i) {
   if (idx === undefined || idx === null) return;
   const item = data[currentCategory][idx];
   document.getElementById("confirmModal").classList.remove("active");
+  showWorking("row-" + item.id);
   try {
     const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
     if (!existing.length) {
@@ -1140,6 +1161,7 @@ async function markSold(i) {
     await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
     data[currentCategory].splice(idx, 1);
     window.pendingSoldIndex = null;
+    hideWorking("row-" + item.id);
     archiveData.unshift({
       id: Date.now(), product_id: item.id, name: item.name, category: item.category,
       size: item.size || null, meta: item.meta || null, price: item.price,
@@ -1148,7 +1170,7 @@ async function markSold(i) {
     });
     renderList();
     showToast("Moved to Sold Archive!");
-  } catch(e) { showToast("Failed: " + e.message); console.error(e); }
+  } catch(e) { hideWorking(); showToast("Failed: " + e.message); console.error(e); }
 }
 
 function openSoldConfirm(i) {
@@ -1208,6 +1230,7 @@ async function confirmRemove() {
   if (i === undefined || i === null) return;
   const item = data[currentCategory][i];
   document.getElementById("removeModal").classList.remove("active");
+  showWorking("row-" + item.id);
   try {
     await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
     data[currentCategory].splice(i, 1);
@@ -1848,6 +1871,19 @@ async function confirmRelist() {
     renderList();
     showToast("Moved to Active listings!");
   } catch(e) { showToast("Failed to relist"); console.error(e); }
+}
+
+function showWorking(rowId) {
+  const el = rowId ? document.getElementById(rowId) : null;
+  if (el) el.classList.add("row-loading");
+  const w = document.getElementById("toastWorking");
+  w.classList.add("show");
+}
+
+function hideWorking(rowId) {
+  const el = rowId ? document.getElementById(rowId) : null;
+  if (el) el.classList.remove("row-loading");
+  document.getElementById("toastWorking").classList.remove("show");
 }
 
 function showToast(msg) {
