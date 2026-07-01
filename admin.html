@@ -130,7 +130,7 @@
     }
     .toast-working.show { opacity: 1; }
     textarea { resize: vertical; min-height: 60px; }
-    .helper { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .helper { font-size: 12px; color: #aaa; margin-top: 4px; line-height: 1.5; }
 
     .btn-primary {
       padding: 10px 20px; background: var(--btn-primary-bg); color: var(--btn-primary-text); border: none;
@@ -1066,7 +1066,7 @@ function renderList() {
           ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>` : ''}
           ${currentStatus === 'active' ? `<button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>` : ''}
           <button class="bulk-btn" onclick="openBulkEditModal()">Edit Selected</button>
-          <button class="bulk-btn" onclick="bulkAction('sold')">Move to Sold</button>
+          <button class="bulk-btn" onclick="bulkAction('sold')">Mark as Sold</button>
           <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
         </div>` : ''}
     </div>`;
@@ -1080,7 +1080,7 @@ function renderList() {
       ? `<button class="btn-status in-stock" onclick="changeStatus(${item.id}, 'inactive')">Move to Inactive</button>`
       : `<button class="btn-status" style="background:#dcfce7;color:#16a34a;" onclick="changeStatus(${item.id}, 'active')">Move to Active</button>`;
 
-    const soldBtn = `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Move to Sold</button>`;
+    const soldBtn = `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Mark as Sold</button>`;
 
     return `
       <div class="product-row" id="row-${item.id}" style="${isChecked ? 'border-color:var(--text);outline:1px solid var(--text);' : ''}">
