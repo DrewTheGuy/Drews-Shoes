@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v3</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v4</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:#333; display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -510,56 +510,10 @@
         <button class="status-pill" id="pillArchive" onclick="switchStatus('archive')">History <span class="pill-count" id="countArchive"></span></button>
       </div>
     </div>
-    <!-- Bulk bar rendered inline with select all -->
-    <div class="card" id="addProductCard">
-      <h2>Add Product</h2>
-      <div class="form-grid">
-        <div class="form-group full">
-          <label>Product Name</label>
-          <input type="text" id="inputName" placeholder='e.g. Nike Kobe 5 Protro "Hall of Fame"'>
-        </div>
-        <div class="form-group" id="sizeGroup">
-          <label>Size (US)</label>
-          <input type="number" id="inputSize" step="0.5" placeholder="e.g. 10">
-        </div>
-        <div class="form-group" id="metaGroup" style="display:none;">
-          <label>Size / Description</label>
-          <input type="text" id="inputMeta" placeholder="e.g. Size L, Hobby Box">
-        </div>
-        <div class="form-group">
-          <label>Price</label>
-          <div style="display:flex; align-items:center; gap:0;">
-            <span style="padding:10px 10px 10px 12px; background:#f0f0f0; border:1px solid #ddd; border-right:none; border-radius:8px 0 0 8px; font-size:13px; color:#555; font-weight:600;">$</span>
-            <input type="text" id="inputPrice" placeholder="0.00" style="border-radius:0 8px 8px 0; border-left:none;" inputmode="decimal">
-          </div>
-        </div>
-        <div class="form-group" style="display:none;">
-          <label>Status</label>
-          <select id="inputStatus">
-            <option value="inactive">Inactive (default)</option>
-            <option value="sold">Sold</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label>Image Path or URL</label>
-          <div class="img-row">
-            <input type="text" id="inputImage" placeholder="images/products/filename.jpg" oninput="previewImg(this.value)">
-            <img class="img-preview" id="imgPreview" src="" alt="preview">
-          </div>
-        </div>
-        <div class="form-group full">
-          <label>Additional Images (one per line)</label>
-          <textarea id="inputImages" placeholder="images/products/shoe-side.jpg&#10;images/products/shoe-sole.jpg"></textarea>
-        </div>
-        <div class="form-group full">
-          <label>Stripe Payment Link (optional)</label>
-          <input type="text" id="inputStripe" placeholder="https://buy.stripe.com/...">
-        </div>
-      </div>
-      <div style="margin-top:20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-        <button class="btn-primary" onclick="addProduct()">Add Product</button>
-        <span style="font-size:12px; color:#aaa; font-weight:500;">New products are saved to Inactive until you make them live.</span>
-      </div>
+    <!-- Add Product trigger -->
+    <div id="addProductCard" style="margin-bottom:16px; display:flex; align-items:center; gap:14px;">
+      <button class="btn-primary" onclick="openAddProductModal()">+ Add Product</button>
+      <span style="font-size:12px; color:var(--text-muted); font-weight:500;">New products are saved to Inactive until you make them live.</span>
     </div>
     <div class="product-list" id="productList"></div>
   </div>
@@ -1125,7 +1079,7 @@ async function addProduct() {
 
 function clearForm() {
   ["inputName","inputSize","inputMeta","inputPrice","inputImage","inputImages","inputStripe"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
-  document.getElementById("inputStatus").value = "in-stock";
+  document.getElementById("inputStatus").value = "inactive";
   document.getElementById("imgPreview").style.display = "none";
 }
 
