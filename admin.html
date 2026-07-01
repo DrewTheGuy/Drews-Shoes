@@ -179,6 +179,8 @@
     [data-theme="dark"] .banner-preview { border-color: var(--border-col); }
     [data-theme="dark"] .empty { color: var(--text-faint); }
     [data-theme="dark"] .status-bar { color: var(--text-muted); }
+    [data-theme="dark"] .card[style*="surface-alt"] p { color: var(--text-muted); }
+    [data-theme="dark"] .card[style*="surface-alt"] strong { color: var(--text); }
     [data-theme="dark"] .swatch.selected { border-color: #fff; }
     [data-theme="dark"] .row-loading { opacity: 0.3; }
     [data-theme="dark"] input::placeholder { color: var(--text-faint); }
@@ -589,9 +591,9 @@
         <button class="btn-secondary" onclick="clearBanner()">Clear</button>
       </div>
     </div>
-    <div class="card" style="background:#f9f9f9;">
+    <div class="card" style="background:var(--surface-alt);">
       <h2>How It Works</h2>
-      <p style="font-size:13px; color:#888; line-height:1.8;">
+      <p style="font-size:13px; color:var(--text-muted); line-height:1.8;">
         1. Type your message and pick a color.<br>
         2. Toggle it <strong>On</strong> and hit <strong>Save Banner</strong>.<br>
         3. The banner saves to this browser. To show it on the live site, a small script on each page reads it — this works best if you always manage the site from the same browser/device.<br>
@@ -1080,7 +1082,7 @@ function renderList() {
     const soldBtn = `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Move to Sold</button>`;
 
     return `
-      <div class="product-row" id="row-${item.id}" style="${isChecked ? 'border-color:#111;background:#fafafa;' : ''}">
+      <div class="product-row" id="row-${item.id}" style="${isChecked ? 'border-color:var(--text);outline:1px solid var(--text);' : ''}">
         <input type="checkbox" class="product-checkbox" ${isChecked ? 'checked' : ''} onclick="toggleSelect(${item.id}, event)">
         <img class="product-thumb" src="${item.image}" onerror="this.src=''" alt="">
         <div class="product-info">
@@ -1704,7 +1706,7 @@ function renderArchive() {
   const archiveSelectRow = `
     <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:var(--surface-alt); border-radius:10px; border:1px solid var(--border-col); flex-wrap:wrap;">
       <input type="checkbox" class="product-checkbox" ${archiveAllSelected ? 'checked' : ''} onchange="toggleArchiveSelectAll(this)">
-      <span style="font-size:12px; font-weight:600; color:var(--text-faint);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-muted);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
@@ -1718,7 +1720,7 @@ function renderArchive() {
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:var(--text-faint);">Listed at ${s.price}</span>`;
     return `
-      <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
+      <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:var(--text);outline:1px solid var(--text);' : ''}">
         <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onclick="toggleArchiveSelect(${s.id}, event)">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
@@ -1937,7 +1939,7 @@ function renderArchiveInline(list) {
   const archiveSelectRow = `
     <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:var(--surface-alt); border-radius:10px; border:1px solid var(--border-col); flex-wrap:wrap;">
       <input type="checkbox" class="product-checkbox" ${archiveAllSelected ? 'checked' : ''} onchange="toggleArchiveSelectAll(this)">
-      <span style="font-size:12px; font-weight:600; color:var(--text-faint);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
+      <span style="font-size:12px; font-weight:600; color:var(--text-muted);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
@@ -1956,7 +1958,7 @@ function renderArchiveInline(list) {
     const date = s.sold_at ? new Date(s.sold_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
     const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:var(--text-faint);">Listed at ${s.price}</span>`;
     return `
-      <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
+      <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:var(--text);outline:1px solid var(--text);' : ''}">
         <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onclick="toggleArchiveSelect(${s.id}, event)">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
