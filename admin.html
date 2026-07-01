@@ -1304,7 +1304,7 @@ function filterArchive(cat) {
 function renderArchive() {
   // Legacy - redirect to renderList if on archive tab
   if (currentStatus === "archive") { renderList(); return; }
-  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
+  const filtered = currentCategory === "all" ? archiveData : archiveData.filter(s => s.category === currentCategory);
   const list = document.getElementById("archiveList");
   const statsEl = document.getElementById("archiveStats");
 
@@ -1410,7 +1410,7 @@ function updateArchiveBulkRow() {
 let lastCheckedArchiveId = null;
 
 function toggleArchiveSelect(id, event) {
-  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
+  const filtered = currentCategory === "all" ? archiveData : archiveData.filter(s => s.category === currentCategory);
   if (event && event.shiftKey && lastCheckedArchiveId !== null) {
     const ids = filtered.map(s => s.id);
     const fromIdx = ids.indexOf(lastCheckedArchiveId);
@@ -1439,7 +1439,7 @@ function setArchiveFilter(cat) {
 }
 
 function toggleArchiveSelectAll(checkbox) {
-  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
+  const filtered = currentCategory === "all" ? archiveData : archiveData.filter(s => s.category === currentCategory);
   if (checkbox.checked) filtered.forEach(s => archiveSelected.add(s.id));
   else archiveSelected.clear();
   renderList();
@@ -1552,7 +1552,7 @@ async function archiveBulkAction(action) {
 
 // RENDER ARCHIVE INLINE (in products list area when archive tab selected)
 function renderArchiveInline(list) {
-  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
+  const filtered = currentCategory === "all" ? archiveData : archiveData.filter(s => s.category === currentCategory);
 
   // Stats
   const total = archiveData.length;
@@ -1567,13 +1567,7 @@ function renderArchiveInline(list) {
       <div class="stat-box"><div class="stat-value green">$${revenue.toFixed(0)}</div><div class="stat-label">Total Revenue</div></div>
       <div class="stat-box"><div class="stat-value">${archiveData.filter(s=>s.category==='sneakers').length}</div><div class="stat-label">Sneakers Sold</div></div>
     </div>
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-      <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        <button class="status-pill ${archiveFilter==='all'?'active':''}" onclick="setArchiveFilter('all')">All</button>
-        <button class="status-pill ${archiveFilter==='sneakers'?'active':''}" onclick="setArchiveFilter('sneakers')">Sneakers</button>
-        <button class="status-pill ${archiveFilter==='streetwear'?'active':''}" onclick="setArchiveFilter('streetwear')">Streetwear</button>
-        <button class="status-pill ${archiveFilter==='cards'?'active':''}" onclick="setArchiveFilter('cards')">Cards</button>
-      </div>
+    <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:12px;">
       <button class="btn-secondary" style="padding:7px 14px; font-size:11px;" onclick="exportCSV()">Export CSV</button>
     </div>`;
 
