@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v1</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v2</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:#333; display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -985,13 +985,18 @@ function switchStatus(status) {
   currentStatus = status;
   selectedIds.clear();
   archiveSelected.clear();
+  // Update pill active classes
+  const pillMap = { active: "pillActive", inactive: "pillInactive", archive: "pillArchive" };
+  Object.entries(pillMap).forEach(([s, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("active", s === status);
+  });
   updateBulkBar();
   if (status === "archive" && !archiveData.length) {
     loadArchive().then(() => renderList());
   } else {
     renderList();
   }
-
 }
 
 function switchCategory(cat) {
@@ -1149,12 +1154,11 @@ function renderList() {
   }
 
   const items = getFilteredItems();
-  const allItems = data[currentCategory] || [];
+  const allItems = Object.values(data).flat();
 
   if (!allItems.length) { list.innerHTML = '<div class="empty">No products yet — add one above.</div>'; return; }
   if (!items.length) { list.innerHTML = `<div class="empty">No ${currentStatus} listings in this category.</div>`; return; }
 
-  const isSneaker = currentCategory === "sneakers";
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
   // Render status tabs into container
@@ -1189,6 +1193,7 @@ function renderList() {
     const meta = item.meta || (item.size ? "Size US " + item.size : "");
     const isActive = item.status === "active" || item.status === "in-stock";
     const isChecked = selectedIds.has(item.id);
+    const isSneaker = item.category === "sneakers";
 
     const statusBtn = isActive
       ? `<button class="btn-status in-stock" onclick="changeStatus(${item.id}, 'inactive')">Move to Inactive</button>`
@@ -1310,7 +1315,6 @@ function openBulkEditModal() {
   document.getElementById("bulkEditCount").textContent = selectedIds.size;
   ["bulkEditName","bulkEditSize","bulkEditMeta","bulkEditPrice","bulkEditStock","bulkEditImage","bulkEditStripe"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
-  const isSneaker = currentCategory === "sneakers";
   document.getElementById("bulkEditSizeRow").style.display = isSneaker ? "" : "none";
   document.getElementById("bulkEditMetaRow").style.display = isSneaker ? "none" : "";
   document.getElementById("bulkEditModal").classList.add("active");
@@ -1323,7 +1327,6 @@ function closeBulkEditModal() {
 async function confirmBulkEdit() {
   const ids = [...selectedIds];
   if (!ids.length) return;
-  const isSneaker = currentCategory === "sneakers";
   const nameVal = document.getElementById("bulkEditName").value.trim();
   const priceRaw = document.getElementById("bulkEditPrice").value.trim().replace(/[^0-9.]/g, "");
   const priceVal = priceRaw ? "$" + formatPrice(priceRaw) : "";
