@@ -1026,6 +1026,12 @@ async function confirmBulkSold() {
         }
         await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
         data[item.category] = data[item.category].filter(p => p.id !== id);
+        archiveData.unshift({
+          id: Date.now() + count, product_id: id, name: item.name, category: item.category,
+          size: item.size || null, meta: item.meta || null, price: item.price,
+          sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
+          sold_at: new Date().toISOString()
+        });
         count++;
       }
     } catch(e) { console.error(e); }
@@ -1134,6 +1140,12 @@ async function markSold(i) {
     await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
     data[currentCategory].splice(idx, 1);
     window.pendingSoldIndex = null;
+    archiveData.unshift({
+      id: Date.now(), product_id: item.id, name: item.name, category: item.category,
+      size: item.size || null, meta: item.meta || null, price: item.price,
+      sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
+      sold_at: new Date().toISOString()
+    });
     renderList();
     showToast("Moved to Sold Archive!");
   } catch(e) { showToast("Failed: " + e.message); console.error(e); }
