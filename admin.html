@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v2</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v3</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:#333; display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1162,11 +1162,12 @@ function renderList() {
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
   // Render status tabs into container
-  // Update pill counts
-  const allProds = Object.values(data).flat();
-  const activeCount = allProds.filter(p => p.status === 'active' || p.status === 'in-stock').length;
-  const inactiveCount = allProds.filter(p => p.status === 'inactive').length;
-  const historyCount = archiveData.length;
+  // Update pill counts - filter by current category if not "all"
+  const countProds = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const countArchive = currentCategory === "all" ? archiveData : archiveData.filter(a => a.category === currentCategory);
+  const activeCount = countProds.filter(p => p.status === "active" || p.status === "in-stock").length;
+  const inactiveCount = countProds.filter(p => p.status === "inactive").length;
+  const historyCount = countArchive.length;
   const ca = document.getElementById("countActive");
   const ci = document.getElementById("countInactive");
   const ch = document.getElementById("countArchive");
