@@ -495,7 +495,8 @@
   <div class="tab-panel active" id="panel-products">
     <div class="status-bar" id="statusBar">Loading products...</div>
     <!-- Category tabs -->
-    <div class="sub-tabs">
+    <div class="sub-tabs" id="categoryTabs">
+      <button class="sub-tab" onclick="switchCategory('all')">All</button>
       <button class="sub-tab active" onclick="switchCategory('sneakers')">Sneakers</button>
       <button class="sub-tab" onclick="switchCategory('streetwear')">Streetwear</button>
       <button class="sub-tab" onclick="switchCategory('cards')">Trading Cards</button>
@@ -737,6 +738,27 @@
   </div>
 </div>
 
+<!-- ARCHIVE BULK EDIT MODAL -->
+<div class="modal-overlay" id="archiveBulkEditModal" onclick="if(event.target===this)closeArchiveBulkEditModal()">
+  <div class="relist-modal">
+    <h2>Edit Selected History Items</h2>
+    <div style="background:var(--warning-bg); border:1px solid var(--warning-border); border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:12px; color:var(--warning-text); font-weight:600;">
+      ⚠ Changes will apply to all <span id="archiveBulkEditCount">0</span> selected items. Leave a field blank to keep existing values.
+    </div>
+    <div class="form-grid">
+      <div class="form-group full"><label>Product Name</label><input type="text" id="abeName" placeholder='e.g. Nike Kobe 5 Protro "Hall of Fame"'></div>
+      <div class="form-group"><label>Price</label><input type="text" id="abePrice" placeholder="e.g. 240" inputmode="decimal"></div>
+      <div class="form-group"><label>Size (US)</label><input type="number" id="abeSize" step="0.5" placeholder="e.g. 10"></div>
+      <div class="form-group full"><label>Image URL</label><input type="text" id="abeImage" placeholder="images/products/filename.jpg"></div>
+      <div class="form-group full"><label>Stripe Payment Link</label><input type="text" id="abeStripe" placeholder="https://buy.stripe.com/..."></div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button class="btn-primary" onclick="confirmArchiveBulkEdit()">Save Changes</button>
+      <button class="btn-secondary" onclick="closeArchiveBulkEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- BULK ARCHIVE RELIST CONFIRM MODAL -->
 <div class="modal-overlay" id="bulkArchiveRelistModal">
   <div class="confirm-modal-box">
@@ -898,11 +920,8 @@ function switchStatus(status) {
   currentStatus = status;
   selectedIds.clear();
   archiveSelected.clear();
-  document.querySelectorAll(".status-pill").forEach(btn => {
-    btn.classList.toggle("active", btn.textContent.toLowerCase().includes(status) || (status === "archive" && btn.textContent.toLowerCase().includes("sold")));
-  });
   updateBulkBar();
-  if (status === "archive") {
+  if (status === "archive" && !archiveData.length) {
     loadArchive().then(() => renderList());
   } else {
     renderList();
@@ -1019,7 +1038,10 @@ function clearForm() {
 }
 
 function getFilteredItems() {
-  return (data[currentCategory] || []).filter(item => {
+  const items = currentCategory === "all"
+    ? Object.values(data).flat()
+    : (data[currentCategory] || []);
+  return items.filter(item => {
     if (currentStatus === "active") return item.status === "active" || item.status === "in-stock";
     if (currentStatus === "inactive") return item.status === "inactive";
     return true;
@@ -1049,11 +1071,17 @@ function renderList() {
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
   // Render status tabs into container
+  // Count per status across all categories
+  const allProds = Object.values(data).flat();
+  const activeCount = allProds.filter(p => p.status === 'active' || p.status === 'in-stock').length;
+  const inactiveCount = allProds.filter(p => p.status === 'inactive').length;
+  const historyCount = archiveData.length;
+
   document.getElementById("statusTabsContainer").innerHTML = `
     <div style="display:flex; gap:6px; margin-bottom:10px;">
-      <button class="status-pill ${currentStatus === 'active' ? 'active' : ''}" onclick="switchStatus('active')">Active</button>
-      <button class="status-pill ${currentStatus === 'inactive' ? 'active' : ''}" onclick="switchStatus('inactive')">Inactive</button>
-      <button class="status-pill ${currentStatus === 'archive' ? 'active' : ''}" onclick="switchStatus('archive')">History</button>
+      <button class="status-pill ${currentStatus === 'active' ? 'active' : ''}" onclick="switchStatus('active')">Active <span style="opacity:0.6;font-weight:600;">(${activeCount})</span></button>
+      <button class="status-pill ${currentStatus === 'inactive' ? 'active' : ''}" onclick="switchStatus('inactive')">Inactive <span style="opacity:0.6;font-weight:600;">(${inactiveCount})</span></button>
+      <button class="status-pill ${currentStatus === 'archive' ? 'active' : ''}" onclick="switchStatus('archive')">History <span style="opacity:0.6;font-weight:600;">(${historyCount})</span></button>
     </div>`;
 
   const bulkVisible = selectedIds.size > 0;
@@ -1714,6 +1742,7 @@ function renderArchive() {
       <span style="font-size:12px; font-weight:600; color:var(--text-muted);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
+          <button class="bulk-btn" onclick="openArchiveBulkEditModal()">Edit Selected</button>
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
           <button class="bulk-btn" onclick="openBulkArchiveRelistModal()">Move to Active</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
@@ -1812,6 +1841,58 @@ function toggleArchiveSelectAll(checkbox) {
   if (checkbox.checked) filtered.forEach(s => archiveSelected.add(s.id));
   else archiveSelected.clear();
   renderList();
+}
+
+function openArchiveBulkEditModal() {
+  if (!archiveSelected.size) return;
+  document.getElementById("archiveBulkEditCount").textContent = archiveSelected.size;
+  ["abeName","abePrice","abeSize","abeImage","abeStripe"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
+  document.getElementById("archiveBulkEditModal").classList.add("active");
+}
+
+function closeArchiveBulkEditModal() {
+  document.getElementById("archiveBulkEditModal").classList.remove("active");
+}
+
+async function confirmArchiveBulkEdit() {
+  const ids = [...archiveSelected];
+  if (!ids.length) return;
+  const nameVal = document.getElementById("abeName").value.trim();
+  const priceRaw = document.getElementById("abePrice").value.trim().replace(/[^0-9.]/g, "");
+  const priceVal = priceRaw ? "$" + formatPrice(priceRaw) : "";
+  const sizeVal = document.getElementById("abeSize").value.trim();
+  const imageVal = document.getElementById("abeImage").value.trim();
+  const stripeVal = document.getElementById("abeStripe").value.trim();
+  const payload = {};
+  if (nameVal) payload.name = nameVal;
+  if (priceVal) payload.price = priceVal;
+  if (sizeVal) payload.size = parseFloat(sizeVal);
+  if (imageVal) payload.image = imageVal;
+  if (stripeVal) payload.stripe_link = stripeVal;
+  if (!Object.keys(payload).length) { showToast("No changes to save"); return; }
+  closeArchiveBulkEditModal();
+  showWorking();
+  let count = 0;
+  for (const id of ids) {
+    try {
+      await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+      const s = archiveData.find(a => a.id === id);
+      if (s) Object.assign(s, {
+        ...(payload.name && { name: payload.name }),
+        ...(payload.price && { price: payload.price }),
+        ...(payload.size && { size: payload.size }),
+        ...(payload.image && { image: payload.image }),
+        ...(payload.stripe_link && { stripe_link: payload.stripe_link }),
+      });
+      count++;
+    } catch(e) { console.error(e); }
+  }
+  hideWorking();
+  archiveSelected.clear();
+  renderList();
+  showToast(`${count} item${count > 1 ? 's' : ''} updated!`);
 }
 
 // ARCHIVE EDIT
@@ -1988,6 +2069,7 @@ function renderArchiveInline(list) {
       <span style="font-size:12px; font-weight:600; color:var(--text-muted);">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
+          <button class="bulk-btn" onclick="openArchiveBulkEditModal()">Edit Selected</button>
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
           <button class="bulk-btn" onclick="openBulkArchiveRelistModal()">Move to Active</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
@@ -2195,7 +2277,10 @@ function initTheme() {
 }
 
 initTheme();
-loadProducts().then(() => loadStats());
+loadProducts().then(() => {
+  loadArchive().then(() => renderList());
+  loadStats();
+});
 loadSettings();
 
 // Confirm modal
