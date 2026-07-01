@@ -764,8 +764,8 @@ function renderList() {
       <span style="font-size:12px; font-weight:600; color:#aaa; margin-right:4px;">${bulkVisible ? selectedIds.size + ' selected' : 'Select all'}</span>
       ${bulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
-          <button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>
-          <button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>
+          ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>` : ''}
+          ${currentStatus === 'active' ? `<button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>` : ''}
           <button class="bulk-btn" onclick="bulkAction('sold')">Move to Sold</button>
           <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
         </div>` : ''}
