@@ -46,6 +46,9 @@
       background: #fafafa; transition: border-color 0.15s; width: 100%;
     }
     input:focus, select:focus, textarea:focus { outline: none; border-color: #111; background: #fff; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
     textarea { resize: vertical; min-height: 60px; }
     .helper { font-size: 11px; color: #aaa; margin-top: 2px; }
 
@@ -309,7 +312,7 @@
           <label>Price</label>
           <div style="display:flex; align-items:center; gap:0;">
             <span style="padding:10px 10px 10px 12px; background:#f0f0f0; border:1px solid #ddd; border-right:none; border-radius:8px 0 0 8px; font-size:13px; color:#555; font-weight:600;">$</span>
-            <input type="number" id="inputPrice" placeholder="0.00" step="0.01" min="0" style="border-radius:0 8px 8px 0; border-left:none;">
+            <input type="text" id="inputPrice" placeholder="0.00" style="border-radius:0 8px 8px 0; border-left:none;" inputmode="decimal">
           </div>
         </div>
         <div class="form-group" style="display:none;">
@@ -611,6 +614,13 @@ function normalize(row) {
   };
 }
 
+// Smart price formatter - $200 not $200.00, $200.50 keeps cents
+function formatPrice(val) {
+  const num = parseFloat(val);
+  if (isNaN(num)) return val;
+  return num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
+}
+
 let currentCategory = "sneakers";
 let currentStatus = "active";
 let data = { sneakers: [], streetwear: [], cards: [] };
@@ -719,8 +729,8 @@ function previewImg(src) {
 
 async function addProduct() {
   const name = document.getElementById("inputName").value.trim();
-  const priceRaw = document.getElementById("inputPrice").value.trim();
-  const price = priceRaw ? "$" + parseFloat(priceRaw).toFixed(0) : "";
+  const priceRaw = document.getElementById("inputPrice").value.trim().replace(/[^0-9.]/g, "");
+  const price = priceRaw ? "$" + formatPrice(priceRaw) : "";
   const status = document.getElementById("inputStatus").value;
   const image = document.getElementById("inputImage").value.trim();
   const extra = document.getElementById("inputImages").value.trim().split("\n").map(s => s.trim()).filter(Boolean);
@@ -1144,7 +1154,8 @@ async function saveEdit_id(id) {
   const item = getItemById(id);
   if (!item) return;
   const name = document.getElementById("edit-name-" + id).value.trim();
-  const price = document.getElementById("edit-price-" + id).value.trim();
+  const priceInput = document.getElementById("edit-price-" + id).value.trim().replace(/[^0-9.]/g, "");
+  const price = priceInput ? "$" + formatPrice(priceInput) : document.getElementById("edit-price-" + id).value.trim();
   const image = document.getElementById("edit-image-" + id).value.trim();
   const stripeVal = document.getElementById("edit-stripe-" + id).value.trim();
   const stock = parseInt(document.getElementById("edit-stock-" + id).value) || 0;
@@ -1717,7 +1728,7 @@ async function confirmRelist() {
   const payload = {
     name: document.getElementById("relistName").value.trim(),
     category: category,
-    price: document.getElementById("relistPrice").value.trim(),
+    price: (() => { const v = document.getElementById("relistPrice").value.trim().replace(/[^0-9.]/g,""); return v ? "$" + formatPrice(v) : document.getElementById("relistPrice").value.trim(); })(),
     image: document.getElementById("relistImage").value.trim(),
     stripe_link: document.getElementById("relistStripe").value.trim() || null,
     status: "in-stock",
