@@ -496,8 +496,8 @@
     <div class="status-bar" id="statusBar">Loading products...</div>
     <!-- Category tabs -->
     <div class="sub-tabs" id="categoryTabs">
-      <button class="sub-tab" onclick="switchCategory('all')">All</button>
-      <button class="sub-tab active" onclick="switchCategory('sneakers')">Sneakers</button>
+      <button class="sub-tab active" onclick="switchCategory('all')">All</button>
+      <button class="sub-tab" onclick="switchCategory('sneakers')">Sneakers</button>
       <button class="sub-tab" onclick="switchCategory('streetwear')">Streetwear</button>
       <button class="sub-tab" onclick="switchCategory('cards')">Trading Cards</button>
     </div>
@@ -899,7 +899,7 @@ function formatPrice(val) {
   return num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
 }
 
-let currentCategory = "sneakers";
+let currentCategory = "all";
 let currentStatus = "active";
 let data = { sneakers: [], streetwear: [], cards: [] };
 let selectedIds = new Set();
@@ -1074,7 +1074,7 @@ function renderList() {
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
   // Render status tabs into container
-  // Count per status across all categories
+  // Always count across ALL categories
   const allProds = Object.values(data).flat();
   const activeCount = allProds.filter(p => p.status === 'active' || p.status === 'in-stock').length;
   const inactiveCount = allProds.filter(p => p.status === 'inactive').length;
@@ -2309,7 +2309,11 @@ function initTheme() {
 
 initTheme();
 loadProducts().then(() => {
-  loadArchive().then(() => renderList());
+  // Set "All" as default — render after both products and archive loaded
+  loadArchive().then(() => {
+    currentCategory = "all";
+    renderList();
+  });
   loadStats();
 });
 loadSettings();
