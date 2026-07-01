@@ -504,7 +504,7 @@
     <p class="confirm-message" id="confirmMessage"></p>
     <p class="confirm-sub">This will remove it from Products and move it to your Sold Archive.</p>
     <div class="confirm-btns">
-      <button class="btn-primary" onclick="markSold()">Yes, Mark as Sold</button>
+      <button class="btn-primary" onclick="markSold()">Yes, Move to Sold</button>
       <button class="btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
@@ -530,7 +530,7 @@
     <p class="confirm-message" id="bulkSoldMessage"></p>
     <p class="confirm-sub">These will be removed from Products and moved to your Sold Archive.</p>
     <div class="confirm-btns">
-      <button class="btn-primary" onclick="confirmBulkSold()">Yes, Mark as Sold</button>
+      <button class="btn-primary" onclick="confirmBulkSold()">Yes, Move to Sold</button>
       <button class="btn-secondary" onclick="document.getElementById('bulkSoldModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
@@ -764,9 +764,9 @@ function renderList() {
       <span style="font-size:12px; font-weight:600; color:#aaa; margin-right:4px;">${bulkVisible ? selectedIds.size + ' selected' : 'Select all'}</span>
       ${bulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
-          <button class="bulk-btn" onclick="bulkAction('active')">Mark as Active</button>
-          <button class="bulk-btn" onclick="bulkAction('inactive')">Mark as Inactive</button>
-          <button class="bulk-btn" onclick="bulkAction('sold')">Mark as Sold</button>
+          <button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>
+          <button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>
+          <button class="bulk-btn" onclick="bulkAction('sold')">Move to Sold</button>
           <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
         </div>` : ''}
     </div>`;
@@ -777,10 +777,10 @@ function renderList() {
     const isChecked = selectedIds.has(item.id);
 
     const statusBtn = isActive
-      ? `<button class="btn-status in-stock" onclick="changeStatus(${item.id}, 'inactive')">Mark as Inactive</button>`
-      : `<button class="btn-status" style="background:#dcfce7;color:#16a34a;" onclick="changeStatus(${item.id}, 'active')">Mark as Active</button>`;
+      ? `<button class="btn-status in-stock" onclick="changeStatus(${item.id}, 'inactive')">Move to Inactive</button>`
+      : `<button class="btn-status" style="background:#dcfce7;color:#16a34a;" onclick="changeStatus(${item.id}, 'active')">Move to Active</button>`;
 
-    const soldBtn = `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Mark as Sold</button>`;
+    const soldBtn = `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Move to Sold</button>`;
 
     return `
       <div class="product-row" id="row-${item.id}" style="${isChecked ? 'border-color:#111;background:#fafafa;' : ''}">
@@ -1311,8 +1311,8 @@ function renderArchive() {
       <span style="font-size:12px; font-weight:600; color:#aaa;">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
-          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Send to Inactive</button>
-          <button class="bulk-btn" onclick="archiveBulkAction('relist')">Relist All</button>
+          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
+          <button class="bulk-btn" onclick="archiveBulkAction('relist')">Move to Active</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
         </div>` : ''}
     </div>`;
@@ -1331,8 +1331,8 @@ function renderArchive() {
           <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
         <div class="product-actions">
-          <button class="btn-edit" onclick="openRelistModal(${i})">Relist</button>
-          <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Send to Inactive</button>
+          <button class="btn-edit" onclick="openRelistModal(${i})">Move to Active</button>
+          <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
       </div>`;
@@ -1426,8 +1426,8 @@ async function sendArchiveToInactive(id) {
       status: "inactive", stock: 0, image: s.image,
       images: [s.image], stripeLink: s.stripe_link || null
     });
-    renderArchive();
-    showToast("Moved to Inactive listings!");
+    renderList();
+    showToast("Moved to Inactive!");
   } catch(e) { showToast("Failed: " + e.message); console.error(e); }
 }
 
@@ -1483,8 +1483,8 @@ async function archiveBulkAction(action) {
   archiveSelected.clear();
   renderArchive();
   updateArchiveBulkRow();
-  const msg = action === "inactive" ? "Moved to Inactive!" : action === "relist" ? "Relisted!" : "Removed!";
-  showToast(`${count} item${count > 1 ? 's' : ''} ${msg}`);
+  const msg = action === "inactive" ? "Moved to Inactive!" : action === "relist" ? "Moved to Active!" : "Removed!";
+  showToast(`${count} item${count > 1 ? 's' : ''} — ${msg}`);
 }
 
 // RENDER ARCHIVE INLINE (in products list area when archive tab selected)
@@ -1522,8 +1522,8 @@ function renderArchiveInline(list) {
       <span style="font-size:12px; font-weight:600; color:#aaa;">${archiveBulkVisible ? archiveSelected.size + ' selected' : 'Select all'}</span>
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
-          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Send to Inactive</button>
-          <button class="bulk-btn" onclick="archiveBulkAction('relist')">Relist All</button>
+          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
+          <button class="bulk-btn" onclick="archiveBulkAction('relist')">Move to Active</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
         </div>` : ''}
     </div>`;
@@ -1547,8 +1547,8 @@ function renderArchiveInline(list) {
           <div style="margin-top:3px;font-size:11px;">${soldFor}</div>
         </div>
         <div class="product-actions">
-          <button class="btn-edit" onclick="openRelistModal(${i})">Relist</button>
-          <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Send to Inactive</button>
+          <button class="btn-edit" onclick="openRelistModal(${i})">Move to Active</button>
+          <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
       </div>`;
