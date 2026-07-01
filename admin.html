@@ -648,9 +648,29 @@ function updateBulkBar() {
   // bulk bar is now inline in renderList select all row
 }
 
-function toggleSelect(id) {
-  if (selectedIds.has(id)) selectedIds.delete(id);
-  else selectedIds.add(id);
+let lastCheckedProductId = null;
+
+function toggleSelect(id, event) {
+  const items = getFilteredItems();
+  if (event && event.shiftKey && lastCheckedProductId !== null) {
+    // Range select between lastCheckedProductId and current id
+    const ids = items.map(i => i.id);
+    const fromIdx = ids.indexOf(lastCheckedProductId);
+    const toIdx = ids.indexOf(id);
+    if (fromIdx !== -1 && toIdx !== -1) {
+      const start = Math.min(fromIdx, toIdx);
+      const end = Math.max(fromIdx, toIdx);
+      const adding = !selectedIds.has(id);
+      for (let i = start; i <= end; i++) {
+        if (adding) selectedIds.add(ids[i]);
+        else selectedIds.delete(ids[i]);
+      }
+    }
+  } else {
+    if (selectedIds.has(id)) selectedIds.delete(id);
+    else selectedIds.add(id);
+  }
+  lastCheckedProductId = id;
   renderList();
 }
 
@@ -784,7 +804,7 @@ function renderList() {
 
     return `
       <div class="product-row" id="row-${item.id}" style="${isChecked ? 'border-color:#111;background:#fafafa;' : ''}">
-        <input type="checkbox" class="product-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelect(${item.id})">
+        <input type="checkbox" class="product-checkbox" ${isChecked ? 'checked' : ''} onclick="toggleSelect(${item.id}, event)">
         <img class="product-thumb" src="${item.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name">${item.name}</div>
@@ -1338,7 +1358,7 @@ function renderArchive() {
     const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
     return `
       <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
-        <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onchange="toggleArchiveSelect(${s.id})">
+        <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onclick="toggleArchiveSelect(${s.id}, event)">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name">${s.name}</div>
@@ -1387,9 +1407,28 @@ function updateArchiveBulkRow() {
   // No-op — bulk row is now rendered inline in renderArchiveInline/renderList
 }
 
-function toggleArchiveSelect(id) {
-  if (archiveSelected.has(id)) archiveSelected.delete(id);
-  else archiveSelected.add(id);
+let lastCheckedArchiveId = null;
+
+function toggleArchiveSelect(id, event) {
+  const filtered = archiveFilter === "all" ? archiveData : archiveData.filter(s => s.category === archiveFilter);
+  if (event && event.shiftKey && lastCheckedArchiveId !== null) {
+    const ids = filtered.map(s => s.id);
+    const fromIdx = ids.indexOf(lastCheckedArchiveId);
+    const toIdx = ids.indexOf(id);
+    if (fromIdx !== -1 && toIdx !== -1) {
+      const start = Math.min(fromIdx, toIdx);
+      const end = Math.max(fromIdx, toIdx);
+      const adding = !archiveSelected.has(id);
+      for (let i = start; i <= end; i++) {
+        if (adding) archiveSelected.add(ids[i]);
+        else archiveSelected.delete(ids[i]);
+      }
+    }
+  } else {
+    if (archiveSelected.has(id)) archiveSelected.delete(id);
+    else archiveSelected.add(id);
+  }
+  lastCheckedArchiveId = id;
   renderList();
 }
 
@@ -1563,7 +1602,7 @@ function renderArchiveInline(list) {
     const soldFor = s.sold_for ? `<span style="color:#16a34a;font-weight:700;">Sold for ${s.sold_for}</span>` : `<span style="color:#aaa;">Listed at ${s.price}</span>`;
     return `
       <div class="product-row" id="archive-row-${s.id}" style="${archiveSelected.has(s.id) ? 'border-color:#111;background:#fafafa;' : ''}">
-        <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onchange="toggleArchiveSelect(${s.id})">
+        <input type="checkbox" class="product-checkbox archive-cb" data-id="${s.id}" ${archiveSelected.has(s.id) ? 'checked' : ''} onclick="toggleArchiveSelect(${s.id}, event)">
         <img class="product-thumb" src="${s.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name">${s.name}</div>
