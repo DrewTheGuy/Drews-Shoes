@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v7</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v9</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:#333; display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -680,7 +680,7 @@
     <p class="confirm-message" id="confirmMessage"></p>
     <p class="confirm-sub">This will remove it from Products and move it to your History.</p>
     <div class="confirm-btns">
-      <button class="btn-primary" onclick="markSold()">Yes, Move to Sold</button>
+      <button class="btn-primary" onclick="markSold()">Yes, Move to History</button>
       <button class="btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
@@ -798,7 +798,7 @@
     <p class="confirm-message" id="bulkSoldMessage"></p>
     <p class="confirm-sub">These will be removed from Products and moved to your History.</p>
     <div class="confirm-btns">
-      <button class="btn-primary" onclick="confirmBulkSold()">Yes, Move to Sold</button>
+      <button class="btn-primary" onclick="confirmBulkSold()">Yes, Move to History</button>
       <button class="btn-secondary" onclick="document.getElementById('bulkSoldModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
@@ -1244,8 +1244,7 @@ async function bulkAction(action) {
     return;
   }
 
-  let successCount = 0;
-  for (const id of ids) {
+  const results = await Promise.all(ids.map(async id => {
     try {
       if (action === "active") {
         await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: "in-stock", stock: 1 }) });
@@ -1254,9 +1253,10 @@ async function bulkAction(action) {
         await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: "inactive", stock: 0 }) });
         const item = getItemById(id); if (item) { item.status = "inactive"; item.stock = 0; }
       }
-      successCount++;
-    } catch(e) { console.error(e); }
-  }
+      return true;
+    } catch(e) { console.error(e); return false; }
+  }));
+  let successCount = results.filter(Boolean).length;
 
   selectedIds.clear();
   updateBulkBar();
@@ -1301,8 +1301,7 @@ async function confirmBulkEdit() {
   if (!Object.keys(payload).length) { showToast("No changes to save"); return; }
   closeBulkEditModal();
   showWorking();
-  let count = 0;
-  for (const id of ids) {
+  const editResults = await Promise.all(ids.map(async id => {
     try {
       await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
       const item = getItemById(id);
@@ -1315,9 +1314,10 @@ async function confirmBulkEdit() {
         ...(payload.size && { size: payload.size }),
         ...(payload.meta && { meta: payload.meta }),
       });
-      count++;
-    } catch(e) { console.error(e); }
-  }
+      return true;
+    } catch(e) { console.error(e); return false; }
+  }));
+  const count = editResults.filter(Boolean).length;
   hideWorking();
   selectedIds.clear();
   renderList();
@@ -1328,32 +1328,31 @@ async function confirmBulkSold() {
   document.getElementById("bulkSoldModal").classList.remove("active");
   showWorking();
   const ids = [...selectedIds];
-  let count = 0;
-  for (const id of ids) {
+  const soldResults = await Promise.all(ids.map(async (id, idx) => {
     try {
       const item = getItemById(id);
-      if (item) {
-        const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${id}&select=id`);
-        if (!existing.length) {
-          await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
-            product_id: id, name: item.name, category: item.category,
-            size: item.size || null, meta: item.meta || null, price: item.price,
-            sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
-            sold_at: new Date().toISOString()
-          })});
-        }
-        await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
-        data[item.category] = data[item.category].filter(p => p.id !== id);
-        archiveData.unshift({
-          id: Date.now() + count, product_id: id, name: item.name, category: item.category,
+      if (!item) return false;
+      const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${id}&select=id`);
+      if (!existing.length) {
+        await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
+          product_id: id, name: item.name, category: item.category,
           size: item.size || null, meta: item.meta || null, price: item.price,
           sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
           sold_at: new Date().toISOString()
-        });
-        count++;
+        })});
       }
-    } catch(e) { console.error(e); }
-  }
+      await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
+      data[item.category] = data[item.category].filter(p => p.id !== id);
+      archiveData.unshift({
+        id: Date.now() + idx, product_id: id, name: item.name, category: item.category,
+        size: item.size || null, meta: item.meta || null, price: item.price,
+        sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
+        sold_at: new Date().toISOString()
+      });
+      return true;
+    } catch(e) { console.error(e); return false; }
+  }));
+  let count = soldResults.filter(Boolean).length;
   selectedIds.clear();
   hideWorking();
   renderList();
@@ -1364,16 +1363,19 @@ async function confirmBulkRemove() {
   document.getElementById("bulkRemoveModal").classList.remove("active");
   showWorking();
   const ids = [...selectedIds];
-  let count = 0;
-  for (const id of ids) {
+  const removeResults = await Promise.all(ids.map(async id => {
     try {
       await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
-      for (const cat of Object.keys(data)) {
-        data[cat] = data[cat].filter(p => p.id !== id);
-      }
-      count++;
-    } catch(e) { console.error(e); }
-  }
+      return id;
+    } catch(e) { console.error(e); return null; }
+  }));
+  const removed = removeResults.filter(Boolean);
+  removed.forEach(id => {
+    for (const cat of Object.keys(data)) {
+      data[cat] = data[cat].filter(p => p.id !== id);
+    }
+  });
+  const count = removed.length;
   selectedIds.clear();
   hideWorking();
   renderList();
@@ -1932,8 +1934,7 @@ async function confirmArchiveBulkEdit() {
   if (!Object.keys(payload).length) { showToast("No changes to save"); return; }
   closeArchiveBulkEditModal();
   showWorking();
-  let count = 0;
-  for (const id of ids) {
+  const archiveEditResults = await Promise.all(ids.map(async id => {
     try {
       await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
       const s = archiveData.find(a => a.id === id);
@@ -1944,9 +1945,10 @@ async function confirmArchiveBulkEdit() {
         ...(payload.image && { image: payload.image }),
         ...(payload.stripe_link && { stripe_link: payload.stripe_link }),
       });
-      count++;
-    } catch(e) { console.error(e); }
-  }
+      return true;
+    } catch(e) { console.error(e); return false; }
+  }));
+  const count = archiveEditResults.filter(Boolean).length;
   hideWorking();
   archiveSelected.clear();
   renderList();
@@ -2047,10 +2049,9 @@ async function sendArchiveToInactive(id) {
 async function archiveBulkAction(action) {
   if (!archiveSelected.size) return;
   const ids = [...archiveSelected];
-  let count = 0;
-  for (const id of ids) {
+  const archiveBulkResults = await Promise.all(ids.map(async id => {
     const s = archiveData.find(a => a.id === id);
-    if (!s) continue;
+    if (!s) return false;
     try {
       if (action === "inactive") {
         const payload = {
@@ -2200,14 +2201,15 @@ window.confirmBulkRemove = async function() {
   if (currentStatus === "archive") {
     document.getElementById("bulkRemoveModal").classList.remove("active");
     const ids = [...archiveSelected];
-    let count = 0;
-    for (const id of ids) {
+    const deleteResults = await Promise.all(ids.map(async id => {
       try {
         await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
-        archiveData = archiveData.filter(s => s.id !== id);
-        count++;
-      } catch(e) { console.error(e); }
-    }
+        return id;
+      } catch(e) { console.error(e); return null; }
+    }));
+    const removed = deleteResults.filter(Boolean);
+    archiveData = archiveData.filter(s => !removed.includes(s.id));
+    const count = removed.length;
     archiveSelected.clear();
     renderList();
     showToast(`${count} item${count > 1 ? 's' : ''} removed from archive!`);
