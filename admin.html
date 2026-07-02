@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v15</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v16</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1289,31 +1289,36 @@ function closeBulkEditModal() {
 async function confirmBulkEdit() {
   const ids = [...selectedIds];
   if (!ids.length) return;
-  const isSneaker = currentCategory === "sneakers";
+  // On "All" tab, items may be mixed categories - handle per item
+  const globalIsSneaker = currentCategory === "sneakers";
   const nameVal = document.getElementById("bulkEditName").value.trim();
   const priceRaw = document.getElementById("bulkEditPrice").value.trim().replace(/[^0-9.]/g, "");
   const priceVal = priceRaw ? "$" + formatPrice(priceRaw) : "";
   const stockVal = document.getElementById("bulkEditStock").value.trim();
   const imageVal = document.getElementById("bulkEditImage").value.trim();
   const stripeVal = document.getElementById("bulkEditStripe").value.trim();
-  const sizeVal = isSneaker ? document.getElementById("bulkEditSize").value.trim() : "";
-  const metaVal = !isSneaker ? document.getElementById("bulkEditMeta").value.trim() : "";
-  const payload = {};
-  if (nameVal) payload.name = nameVal;
-  if (priceVal) payload.price = priceVal;
-  if (stockVal !== "") payload.stock = parseInt(stockVal);
-  if (imageVal) { payload.image = imageVal; payload.images = JSON.stringify([imageVal]); }
-  if (stripeVal) payload.stripe_link = stripeVal;
-  if (isSneaker && sizeVal) payload.size = parseFloat(sizeVal);
-  if (!isSneaker && metaVal) payload.meta = metaVal;
-  if (!Object.keys(payload).length) { showToast("No changes to save"); return; }
+  const sizeVal = document.getElementById("bulkEditSize").value.trim();
+  const metaVal = document.getElementById("bulkEditMeta").value.trim();
+  // Base payload (fields that apply to all categories)
+  const basePayload = {};
+  if (nameVal) basePayload.name = nameVal;
+  if (priceVal) basePayload.price = priceVal;
+  if (stockVal !== "") basePayload.stock = parseInt(stockVal);
+  if (imageVal) { basePayload.image = imageVal; basePayload.images = JSON.stringify([imageVal]); }
+  if (stripeVal) basePayload.stripe_link = stripeVal;
+  if (!Object.keys(basePayload).length && !sizeVal && !metaVal) { showToast("No changes to save"); return; }
   closeBulkEditModal();
   showWorking();
   const editResults = await Promise.all(ids.map(async id => {
     try {
-      await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
       const item = getItemById(id);
-      if (item) Object.assign(item, {
+      if (!item) return false;
+      const itemIsSneaker = item.category === "sneakers";
+      const payload = { ...basePayload };
+      if (itemIsSneaker && sizeVal) payload.size = parseFloat(sizeVal);
+      if (!itemIsSneaker && metaVal) payload.meta = metaVal;
+      await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
+      Object.assign(item, {
         ...(payload.name && { name: payload.name }),
         ...(payload.price && { price: payload.price }),
         ...(payload.stock !== undefined && { stock: payload.stock }),
