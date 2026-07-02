@@ -462,10 +462,10 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v10</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v11</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
-      <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:#333; display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
+      <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
         <div id="thumbCircle" style="width:22px; height:22px; border-radius:50%; background:#fff; transition:transform 0.25s; display:flex; align-items:center; justify-content:center; transform:translateX(0);">
           <svg id="sunIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round">
             <circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
@@ -513,7 +513,7 @@
     <!-- Add Product trigger -->
     <div id="addProductCard" style="display:flex; flex-direction:column; align-items:flex-end; gap:5px; margin-bottom:12px;">
       <button class="btn-secondary" style="padding:8px 16px; font-size:11px;" onclick="openAddProductModal()">+ Add Product</button>
-      <span style="font-size:11px; color:var(--text-faint); font-weight:500;">New products save to Inactive first.</span>
+      <span style="font-size:11px; color:var(--text-faint); font-weight:500; line-height:1;">New products save to Inactive first.</span>
     </div>
     <div class="product-list" id="productList"></div>
   </div>
@@ -678,7 +678,7 @@
   <div class="confirm-modal-box">
     <p class="confirm-title">Mark as Sold?</p>
     <p class="confirm-message" id="confirmMessage"></p>
-    <p class="confirm-sub">This will remove it from Products and move it to your History.</p>
+    <p class="confirm-sub">This will remove it from your listings and move it to History.</p>
     <div class="confirm-btns">
       <button class="btn-primary" onclick="markSold()">Yes, Move to History</button>
       <button class="btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('active')">Cancel</button>
@@ -796,7 +796,7 @@
   <div class="confirm-modal-box">
     <p class="confirm-title">Mark as Sold?</p>
     <p class="confirm-message" id="bulkSoldMessage"></p>
-    <p class="confirm-sub">These will be removed from Products and moved to your History.</p>
+    <p class="confirm-sub">These will be removed from your listings and moved to History.</p>
     <div class="confirm-btns">
       <button class="btn-primary" onclick="confirmBulkSold()">Yes, Move to History</button>
       <button class="btn-secondary" onclick="document.getElementById('bulkSoldModal').classList.remove('active')">Cancel</button>
@@ -1152,9 +1152,9 @@ function renderList() {
 
     const statusBtn = isActive
       ? `<button class="btn-status in-stock" onclick="changeStatus(${item.id}, 'inactive')">Move to Inactive</button>`
-      : `<button class="btn-status" style="background:#dcfce7;color:#16a34a;" onclick="changeStatus(${item.id}, 'active')">Move to Active</button>`;
+      : `<button class="btn-status" style="background:#dcfce7;color:#16a34a;border:none;" onclick="changeStatus(${item.id}, 'active')">Move to Active</button>`;
 
-    const soldBtn = `<button class="btn-status sold" style="font-size:10px;" onclick="openSoldConfirm_id(${item.id})">Mark as Sold</button>`;
+    const soldBtn = `<button class="btn-edit" style="font-size:11px; color:#dc2626; border-color:#fca5a5;" onclick="openSoldConfirm_id(${item.id})">Mark as Sold</button>`;
 
     return `
       <div class="product-row" id="row-${item.id}" style="${isChecked ? 'border-color:var(--text);outline:1px solid var(--text);' : ''}">
@@ -1328,33 +1328,39 @@ async function confirmBulkSold() {
   document.getElementById("bulkSoldModal").classList.remove("active");
   showWorking();
   const ids = [...selectedIds];
-  let count = 0;
-  for (const id of ids) {
+  // Parallel archive inserts, then parallel deletes
+  const soldItems = ids.map(id => getItemById(id)).filter(Boolean);
+  await Promise.all(soldItems.map(async (item, i) => {
     try {
-      const item = getItemById(id);
-      if (item) {
-        const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${id}&select=id`);
-        if (!existing.length) {
-          await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
-            product_id: id, name: item.name, category: item.category,
-            size: item.size || null, meta: item.meta || null, price: item.price,
-            sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
-            sold_at: new Date().toISOString()
-          })});
-        }
-        await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "DELETE" });
-        data[item.category] = data[item.category].filter(p => p.id !== id);
-        archiveData.unshift({
-          id: Date.now() + count, product_id: id, name: item.name, category: item.category,
+      const existing = await sbFetch(`/rest/v1/sold_archive?product_id=eq.${item.id}&select=id`);
+      if (!existing.length) {
+        await sbFetch("/rest/v1/sold_archive", { method: "POST", body: JSON.stringify({
+          product_id: item.id, name: item.name, category: item.category,
           size: item.size || null, meta: item.meta || null, price: item.price,
           sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
           sold_at: new Date().toISOString()
-        });
-        count++;
+        })});
       }
     } catch(e) { console.error(e); }
-  }
-  selectedIds.clear();
+  }));
+  // Now parallel delete from products
+  const deleteResults = await Promise.all(soldItems.map(async (item, i) => {
+    try {
+      await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
+      archiveData.unshift({
+        id: Date.now() + i, product_id: item.id, name: item.name, category: item.category,
+        size: item.size || null, meta: item.meta || null, price: item.price,
+        sold_for: null, image: item.image, stripe_link: item.stripeLink || null,
+        sold_at: new Date().toISOString()
+      });
+      return item;
+    } catch(e) { console.error(e); return null; }
+  }));
+  const successful = deleteResults.filter(Boolean);
+  successful.forEach(item => {
+    data[item.category] = data[item.category].filter(p => p.id !== item.id);
+  });
+  let count = successful.length;  selectedIds.clear();
   hideWorking();
   renderList();
   showToast(`${count} product${count > 1 ? 's' : ''} moved to History!`);
@@ -2051,50 +2057,62 @@ async function archiveBulkAction(action) {
   if (!archiveSelected.size) return;
   const ids = [...archiveSelected];
   let count = 0;
-  for (const id of ids) {
-    const s = archiveData.find(a => a.id === id);
-    if (!s) continue;
-    try {
-      if (action === "inactive") {
-        const payload = {
-          name: s.name, category: s.category, size: s.size || null,
-          meta: s.meta || null, price: s.price, image: s.image,
-          images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
-          status: "inactive", stock: 0
-        };
-        const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+
+  if (action === "delete") {
+    // Safe to parallelize - just deletes
+    const results = await Promise.all(ids.map(async id => {
+      try {
         await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
-        archiveData = archiveData.filter(a => a.id !== id);
-        if (!data[s.category]) data[s.category] = [];
-        data[s.category].push({
-          id: rows[0].id, name: s.name, category: s.category,
-          size: s.size, meta: s.meta, price: s.price,
-          status: "inactive", stock: 0, image: s.image,
-          images: [s.image], stripeLink: s.stripe_link || null
-        });
-      } else if (action === "relist") {
-        const payload = {
-          name: s.name, category: s.category, size: s.size || null,
-          meta: s.meta || null, price: s.price, image: s.image,
-          images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
-          status: "in-stock", stock: 1
-        };
-        const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
-        await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
-        archiveData = archiveData.filter(a => a.id !== id);
-        if (!data[s.category]) data[s.category] = [];
-        data[s.category].push({
-          id: rows[0].id, name: s.name, category: s.category,
-          size: s.size, meta: s.meta, price: s.price,
-          status: "in-stock", stock: 1, image: s.image,
-          images: [s.image], stripeLink: s.stripe_link || null
-        });
-      } else if (action === "delete") {
-        await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
-        archiveData = archiveData.filter(a => a.id !== id);
-      }
-      count++;
-    } catch(e) { console.error(e); }
+        return id;
+      } catch(e) { console.error(e); return null; }
+    }));
+    const removed = results.filter(Boolean);
+    archiveData = archiveData.filter(a => !removed.includes(a.id));
+    count = removed.length;
+  } else {
+    // Sequential for state mutations
+    for (const id of ids) {
+      const s = archiveData.find(a => a.id === id);
+      if (!s) continue;
+      try {
+        if (action === "inactive") {
+          const payload = {
+            name: s.name, category: s.category, size: s.size || null,
+            meta: s.meta || null, price: s.price, image: s.image,
+            images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
+            status: "inactive", stock: 0
+          };
+          const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+          await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+          archiveData = archiveData.filter(a => a.id !== id);
+          if (!data[s.category]) data[s.category] = [];
+          data[s.category].push({
+            id: rows[0].id, name: s.name, category: s.category,
+            size: s.size, meta: s.meta, price: s.price,
+            status: "inactive", stock: 0, image: s.image,
+            images: [s.image], stripeLink: s.stripe_link || null
+          });
+        } else if (action === "relist") {
+          const payload = {
+            name: s.name, category: s.category, size: s.size || null,
+            meta: s.meta || null, price: s.price, image: s.image,
+            images: JSON.stringify([s.image]), stripe_link: s.stripe_link || null,
+            status: "in-stock", stock: 1
+          };
+          const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
+          await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+          archiveData = archiveData.filter(a => a.id !== id);
+          if (!data[s.category]) data[s.category] = [];
+          data[s.category].push({
+            id: rows[0].id, name: s.name, category: s.category,
+            size: s.size, meta: s.meta, price: s.price,
+            status: "in-stock", stock: 1, image: s.image,
+            images: [s.image], stripeLink: s.stripe_link || null
+          });
+        }
+        count++;
+      } catch(e) { console.error(e); }
+    }
   }
   archiveSelected.clear();
   renderList();
