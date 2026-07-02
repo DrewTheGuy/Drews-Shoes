@@ -2411,13 +2411,6 @@ loadProducts().then(() => {
 });
 loadSettings();
 
-// Confirm modal
-document.getElementById("confirmOkBtn").addEventListener("click", doConfirm);
-document.getElementById("confirmCancelBtn").addEventListener("click", closeConfirm);
-document.getElementById("confirmModal").addEventListener("click", (e) => {
-  if (e.target === document.getElementById("confirmModal")) closeConfirm();
-});
-
 // Relist modal
 document.getElementById("relistModal").addEventListener("click", (e) => {
   if (e.target === document.getElementById("relistModal")) closeRelistModal();
