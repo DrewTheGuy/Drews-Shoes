@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v14</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v15</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1289,6 +1289,7 @@ function closeBulkEditModal() {
 async function confirmBulkEdit() {
   const ids = [...selectedIds];
   if (!ids.length) return;
+  const isSneaker = currentCategory === "sneakers";
   const nameVal = document.getElementById("bulkEditName").value.trim();
   const priceRaw = document.getElementById("bulkEditPrice").value.trim().replace(/[^0-9.]/g, "");
   const priceVal = priceRaw ? "$" + formatPrice(priceRaw) : "";
