@@ -1219,13 +1219,13 @@ function getIndexById(id) {
 }
 
 function openSoldConfirm_id(id) {
-  window.pendingSoldIndex = getIndexById(id);
+  window.pendingSoldItemId = id;
   const item = getItemById(id);
   document.getElementById("confirmMessage").textContent = item.name;
   document.getElementById("confirmModal").classList.add("active");
 }
 
-function copyProduct_id(id) { copyProduct(getIndexById(id)); }
+async async function copyProduct_id(id) { const item = getItemById(id); if (item) await _copyProductItem(item); }
 
 function deleteProduct_id(id) {
   window.pendingRemoveId = id;
@@ -1396,12 +1396,6 @@ async function confirmBulkRemove() {
 }
 
 // COPY PRODUCT
-async function copyProduct_id(id) {
-  const item = getItemById(id);
-  if (!item) return;
-  await _copyProductItem(item);
-}
-
 async function copyProduct(i) {
   const item = data[currentCategory] ? data[currentCategory][i] : null;
   if (!item) return;
@@ -1503,8 +1497,9 @@ async function markSold(i) {
 }
 
 function openSoldConfirm(i) {
-  window.pendingSoldIndex = i;
-  const item = data[currentCategory][i];
+  const item = data[currentCategory] ? data[currentCategory][i] : null;
+  if (!item) return;
+  window.pendingSoldItemId = item.id;
   document.getElementById("confirmMessage").textContent = item.name;
   document.getElementById("confirmModal").classList.add("active");
 }
