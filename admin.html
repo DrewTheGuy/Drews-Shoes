@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v12</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v13</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1397,7 +1397,8 @@ async function confirmBulkRemove() {
 
 // COPY PRODUCT
 async function copyProduct(i) {
-  const item = data[currentCategory] ? data[currentCategory][i] : null;
+  const items = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const item = items[i];
   if (!item) return;
   await _copyProductItem(item);
 }
@@ -1419,7 +1420,9 @@ async function _copyProductItem(item) {
   try {
     const rows = await sbFetch("/rest/v1/products", { method: "POST", body: JSON.stringify(payload) });
     const newItem = rows[0];
-    data[currentCategory].push({
+    const targetCat = newItem.category || currentCategory;
+    if (!data[targetCat]) data[targetCat] = [];
+    data[targetCat].push({
       id: newItem.id, name: newItem.name, category: newItem.category,
       size: newItem.size, meta: newItem.meta, price: newItem.price,
       status: newItem.status, stock: newItem.stock, image: newItem.image,
@@ -1497,7 +1500,8 @@ async function markSold(i) {
 }
 
 function openSoldConfirm(i) {
-  const item = data[currentCategory] ? data[currentCategory][i] : null;
+  const items = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const item = items[i];
   if (!item) return;
   window.pendingSoldItemId = item.id;
   document.getElementById("confirmMessage").textContent = item.name;
@@ -1505,7 +1509,8 @@ function openSoldConfirm(i) {
 }
 
 async function toggleStatus(i) {
-  const item = data[currentCategory][i];
+  const items = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const item = items[i];
   const isSold = item.status !== "sold" && item.stock > 0 ? false : true;
 
   if (!isSold) {
@@ -1528,7 +1533,10 @@ async function toggleStatus(i) {
           console.log("Archive result:", archiveRes);
         }
         await sbFetch(`/rest/v1/products?id=eq.${item.id}`, { method: "DELETE" });
-        data[currentCategory].splice(i, 1);
+        for (const cat of Object.keys(data)) {
+          const idx2 = data[cat].findIndex(p => p.id === item.id);
+          if (idx2 !== -1) { data[cat].splice(idx2, 1); break; }
+        }
         renderList();
         showToast("Moved to History!");
       } catch(e) { showToast("Failed: " + e.message); console.error("toggleStatus error:", e); }
@@ -1543,8 +1551,10 @@ async function toggleStatus(i) {
 
 
 async function deleteProduct(i) {
-  window.pendingRemoveIndex = i;
-  const item = data[currentCategory][i];
+  const items = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const item = items[i];
+  if (!item) return;
+  window.pendingRemoveId = item.id;
   document.getElementById("removeMessage").textContent = item.name;
   document.getElementById("removeModal").classList.add("active");
 }
@@ -1579,12 +1589,14 @@ function closeEdit_id(id) {
 }
 
 function openEdit(i) {
-  const item = data[currentCategory][i];
+  const items = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const item = items[i];
   if (item) openEdit_id(item.id);
 }
 
 function closeEdit(i) {
-  const item = data[currentCategory][i];
+  const items = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const item = items[i];
   if (item) closeEdit_id(item.id);
 }
 
@@ -1610,7 +1622,8 @@ async function saveEdit_id(id) {
 }
 
 async function saveEdit(i) {
-  const item = data[currentCategory][i];
+  const items = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const item = items[i];
   if (item) await saveEdit_id(item.id);
 }
 
