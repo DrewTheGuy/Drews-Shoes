@@ -1225,7 +1225,7 @@ function openSoldConfirm_id(id) {
   document.getElementById("confirmModal").classList.add("active");
 }
 
-async async function copyProduct_id(id) { const item = getItemById(id); if (item) await _copyProductItem(item); }
+async function copyProduct_id(id) { const item = getItemById(id); if (item) await _copyProductItem(item); }
 
 function deleteProduct_id(id) {
   window.pendingRemoveId = id;
