@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v16</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v17</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1277,8 +1277,9 @@ function openBulkEditModal() {
   ["bulkEditName","bulkEditSize","bulkEditMeta","bulkEditPrice","bulkEditStock","bulkEditImage","bulkEditStripe"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   const isSneakerCat = currentCategory === "sneakers";
-  document.getElementById("bulkEditSizeRow").style.display = isSneakerCat ? "" : "none";
-  document.getElementById("bulkEditMetaRow").style.display = isSneakerCat ? "none" : "";
+  const hasMultiCat = currentCategory === "all";
+  document.getElementById("bulkEditSizeRow").style.display = (isSneakerCat || hasMultiCat) ? "" : "none";
+  document.getElementById("bulkEditMetaRow").style.display = (!isSneakerCat || hasMultiCat) ? "" : "none";
   document.getElementById("bulkEditModal").classList.add("active");
 }
 
@@ -1319,13 +1320,13 @@ async function confirmBulkEdit() {
       if (!itemIsSneaker && metaVal) payload.meta = metaVal;
       await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
       Object.assign(item, {
-        ...(payload.name && { name: payload.name }),
-        ...(payload.price && { price: payload.price }),
+        ...(payload.name !== undefined && { name: payload.name }),
+        ...(payload.price !== undefined && { price: payload.price }),
         ...(payload.stock !== undefined && { stock: payload.stock }),
-        ...(payload.image && { image: payload.image, images: [payload.image] }),
-        ...(payload.stripe_link && { stripeLink: payload.stripe_link }),
-        ...(payload.size && { size: payload.size }),
-        ...(payload.meta && { meta: payload.meta }),
+        ...(payload.image !== undefined && { image: payload.image, images: [payload.image] }),
+        ...(payload.stripe_link !== undefined && { stripeLink: payload.stripe_link }),
+        ...(payload.size !== undefined && { size: payload.size }),
+        ...(payload.meta !== undefined && { meta: payload.meta }),
       });
       return true;
     } catch(e) { console.error(e); return false; }
