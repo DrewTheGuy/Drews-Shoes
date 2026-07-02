@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v5</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v6</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:#333; display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -511,9 +511,9 @@
       </div>
     </div>
     <!-- Add Product trigger -->
-    <div id="addProductCard" style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--surface-alt); border-radius:10px; border:1px solid var(--border-col); margin-bottom:12px;">
+    <div id="addProductCard" style="display:flex; align-items:center; justify-content:flex-end; gap:12px; margin-bottom:12px;">
       <span style="font-size:12px; color:var(--text-muted); font-weight:500;">New products save to Inactive first.</span>
-      <button class="btn-primary" style="padding:8px 16px; font-size:11px;" onclick="openAddProductModal()">+ Add Product</button>
+      <button class="btn-secondary" style="padding:8px 16px; font-size:11px;" onclick="openAddProductModal()">+ Add Product</button>
     </div>
     <div class="product-list" id="productList"></div>
   </div>
