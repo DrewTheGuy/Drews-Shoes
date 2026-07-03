@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v17</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v18</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -965,6 +965,17 @@ function switchCategory(cat) {
   renderList();
 }
 
+function updatePillCounts() {
+  const countProds = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
+  const countArchive = currentCategory === "all" ? archiveData : archiveData.filter(a => a.category === currentCategory);
+  const ca = document.getElementById("countActive");
+  const ci = document.getElementById("countInactive");
+  const ch = document.getElementById("countArchive");
+  if (ca) ca.textContent = "(" + countProds.filter(p => p.status === "active" || p.status === "in-stock").length + ")";
+  if (ci) ci.textContent = "(" + countProds.filter(p => p.status === "inactive").length + ")";
+  if (ch) ch.textContent = "(" + countArchive.length + ")";
+}
+
 function updateBulkBar() {
   // bulk bar is now inline in renderList select all row
 }
@@ -1072,6 +1083,7 @@ async function addProduct() {
     if (!data[addedCat]) data[addedCat] = [];
     data[addedCat].push(normalize(rows[0]));
     closeAddProductModal();
+    updatePillCounts();
     renderList();
     showToast("Product added to Inactive listings!");
   } catch(e) { showToast("Failed to add product"); console.error(e); }
@@ -1116,18 +1128,7 @@ function renderList() {
   const allSelected = items.length > 0 && items.every(item => selectedIds.has(item.id));
 
   // Render status tabs into container
-  // Update pill counts - filter by current category if not "all"
-  const countProds = currentCategory === "all" ? Object.values(data).flat() : (data[currentCategory] || []);
-  const countArchive = currentCategory === "all" ? archiveData : archiveData.filter(a => a.category === currentCategory);
-  const activeCount = countProds.filter(p => p.status === "active" || p.status === "in-stock").length;
-  const inactiveCount = countProds.filter(p => p.status === "inactive").length;
-  const historyCount = countArchive.length;
-  const ca = document.getElementById("countActive");
-  const ci = document.getElementById("countInactive");
-  const ch = document.getElementById("countArchive");
-  if (ca) ca.textContent = "(" + activeCount + ")";
-  if (ci) ci.textContent = "(" + inactiveCount + ")";
-  if (ch) ch.textContent = "(" + historyCount + ")";
+  updatePillCounts();
 
   const bulkVisible = selectedIds.size > 0;
   const selectAllRow = `
@@ -1203,6 +1204,7 @@ async function changeStatus(id, newStatus) {
     selectedIds.delete(id);
     updateBulkBar();
     renderList();
+    updatePillCounts();
     hideWorking("row-" + id);
     showToast(newStatus === "active" ? "Moved to Active!" : "Moved to Inactive!");
   } catch(e) { hideWorking("row-" + id); showToast("Failed to update"); console.error(e); }
@@ -1496,6 +1498,7 @@ async function markSold(i) {
     }
     window.pendingSoldItemId = null;
     hideWorking("row-" + item.id);
+    updatePillCounts();
     archiveData.unshift({
       id: Date.now(), product_id: item.id, name: item.name, category: item.category,
       size: item.size || null, meta: item.meta || null, price: item.price,
@@ -1580,6 +1583,7 @@ async function confirmRemove() {
       if (idx !== -1) { data[cat].splice(idx, 1); break; }
     }
     window.pendingRemoveId = null;
+    updatePillCounts();
     renderList(); showToast("Product removed");
   } catch(e) { showToast("Failed to delete"); console.error(e); }
 }
