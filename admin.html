@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v20</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v21</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -921,13 +921,14 @@ let selectedIds = new Set();
 
 // MAIN TABS
 function switchMainTab(tab) {
-  document.querySelectorAll(".main-tab").forEach((t, i) => {
-    t.classList.toggle("active", ["products","banner","settings","dashboard"][i] === tab);
+  document.querySelectorAll(".main-tab").forEach(t => {
+    const match = t.getAttribute("onclick").match(/'([^']+)'/);
+    if (match) t.classList.toggle("active", match[1] === tab);
   });
   document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
   document.getElementById("panel-" + tab).classList.add("active");
-  if (tab === "archive") loadArchive();
   if (tab === "dashboard") loadStats();
+  if (tab === "products") renderList();
 }
 
 // CATEGORY TABS
@@ -942,7 +943,8 @@ function switchStatus(status) {
     if (el) el.classList.toggle("active", s === status);
   });
   updateBulkBar();
-  if (status === "archive" && !archiveData.length) {
+  if (status === "archive") {
+    // Always reload archive to ensure fresh data
     loadArchive().then(() => renderList());
   } else {
     renderList();
@@ -953,12 +955,18 @@ function switchCategory(cat) {
   currentCategory = cat;
   selectedIds.clear();
   archiveSelected.clear();
+  // Update tab highlighting
   document.querySelectorAll("#categoryTabs .sub-tab").forEach(btn => {
     const match = btn.getAttribute("onclick").match(/'([^']+)'/);
     if (match) btn.classList.toggle("active", match[1] === cat);
   });
   updateBulkBar();
-  renderList();
+  // If on history, re-filter archive by new category
+  if (currentStatus === "archive") {
+    renderList();
+  } else {
+    renderList();
+  }
 }
 
 function updatePillCounts() {
@@ -973,6 +981,7 @@ function updatePillCounts() {
 }
 
 function updateBulkBar() {
+  updatePillCounts();
   // bulk bar is now inline in renderList select all row
 }
 
@@ -1930,11 +1939,7 @@ function toggleArchiveSelect(id, event) {
   renderList();
 }
 
-function setArchiveFilter(cat) {
-  archiveFilter = cat;
-  archiveSelected.clear();
-  renderList();
-}
+// setArchiveFilter removed - use switchCategory instead
 
 function toggleArchiveSelectAll(checkbox) {
   const filtered = currentCategory === "all" ? archiveData : archiveData.filter(s => s.category === currentCategory);
