@@ -471,7 +471,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v29</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v31</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1198,8 +1198,15 @@ function renderList() {
           ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>` : ''}
           ${currentStatus === 'active' ? `<button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>` : ''}
           <button class="bulk-btn" onclick="openBulkEditModal()">Edit Selected</button>
-          <button class="bulk-btn" onclick="bulkStripeToggle(false)">Stripe On</button>
-          <button class="bulk-btn" onclick="bulkStripeToggle(true)">Stripe Off</button>
+          ${(() => {
+            const firstId = [...selectedIds][0];
+            const firstItem = firstId ? getItemById(firstId) : null;
+            const isHidden = firstItem ? firstItem.stripeHidden : false;
+            return `<button class="bulk-btn" onclick="bulkStripeToggle(${!isHidden})"
+              style="${isHidden ? 'color:#dc2626;border-color:#fca5a5;' : 'color:#635bff;border-color:#c4b5fd;'}">
+              Stripe ${isHidden ? '✕ Off — click to enable' : '✓ On — click to hide'}
+            </button>`;
+          })()}
           <button class="bulk-btn" onclick="bulkAction('sold')">Mark as Sold</button>
           <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
         </div>` : ''}
@@ -1291,11 +1298,13 @@ async function bulkStripeToggle(hidden) {
   const ids = [...selectedIds];
   if (!ids.length) return;
   showWorking();
+  // Only affect products that have a stripe link
   const results = await Promise.all(ids.map(async id => {
+    const item = getItemById(id);
+    if (!item || !item.stripeLink) return false;
     try {
       await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ stripe_hidden: hidden }) });
-      const item = getItemById(id);
-      if (item) item.stripeHidden = hidden;
+      item.stripeHidden = hidden;
       return true;
     } catch(e) { console.error(e); return false; }
   }));
