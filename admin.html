@@ -471,7 +471,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v31</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v33</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1189,24 +1189,28 @@ function renderList() {
   updatePillCounts();
 
   const bulkVisible = selectedIds.size > 0;
+  const firstBulkItem = bulkVisible ? getItemById([...selectedIds][0]) : null;
+  const bulkStripeHidden = firstBulkItem ? firstBulkItem.stripeHidden : false;
   const selectAllRow = `
     <div style="padding:10px 14px; display:flex; align-items:center; gap:10px; margin-bottom:8px; background:var(--surface-alt); border-radius:10px; border:1px solid var(--border-col); flex-wrap:wrap;">
       <input type="checkbox" class="product-checkbox" ${allSelected ? 'checked' : ''} onchange="toggleSelectAll(this)">
       <span style="font-size:12px; font-weight:600; color:var(--text-faint); margin-right:4px;">${bulkVisible ? selectedIds.size + ' selected' : 'Select all'}</span>
       ${bulkVisible ? `
-        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-left:4px;">
+          <button class="bulk-btn" onclick="openBulkEditModal()">Edit Selected</button>
+          <button onclick="bulkStripeToggle(${!bulkStripeHidden})" title="${bulkStripeHidden ? 'Enable Stripe' : 'Hide Stripe'}" style="
+            display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
+            border-radius:20px; cursor:pointer; font-size:10px; font-weight:700;
+            font-family:'Manrope',sans-serif; transition:all 0.15s;
+            ${bulkStripeHidden ? 'background:#fff5f5;border:1px solid #fca5a5;color:#dc2626;' : 'background:#f5f3ff;border:1px solid #c4b5fd;color:#635bff;'}">
+            <span style="width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;
+              ${bulkStripeHidden ? 'background:#fca5a5;color:#fff;' : 'background:#635bff;color:#fff;'}">
+              ${bulkStripeHidden ? '✕' : '✓'}
+            </span>
+            Stripe
+          </button>
           ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>` : ''}
           ${currentStatus === 'active' ? `<button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>` : ''}
-          <button class="bulk-btn" onclick="openBulkEditModal()">Edit Selected</button>
-          ${(() => {
-            const firstId = [...selectedIds][0];
-            const firstItem = firstId ? getItemById(firstId) : null;
-            const isHidden = firstItem ? firstItem.stripeHidden : false;
-            return `<button class="bulk-btn" onclick="bulkStripeToggle(${!isHidden})"
-              style="${isHidden ? 'color:#dc2626;border-color:#fca5a5;' : 'color:#635bff;border-color:#c4b5fd;'}">
-              Stripe ${isHidden ? '✕ Off — click to enable' : '✓ On — click to hide'}
-            </button>`;
-          })()}
           <button class="bulk-btn" onclick="bulkAction('sold')">Mark as Sold</button>
           <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
         </div>` : ''}
