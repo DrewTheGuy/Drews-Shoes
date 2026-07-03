@@ -226,7 +226,7 @@
       font-family: 'Manrope', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    .btn-status.in-stock { background: #f0f0f0; color: #444; border-color: #ddd; }
+    .btn-status.in-stock { background: #f0f0f0; color: #444; border: 1px solid #ddd; }
     .btn-status.in-stock:hover { background: #e4e4e4; border-color: #bbb; }
     [data-theme="dark"] .btn-status.in-stock { background: var(--surface-alt); border-color: var(--border-col); color: var(--text-muted); }
     [data-theme="dark"] .btn-status.in-stock:hover { background: var(--row-selected); border-color: var(--text-muted); color: var(--text); }
@@ -265,12 +265,12 @@
     .bulk-left { font-size: 12px; font-weight: 700; color: var(--bulk-text); letter-spacing: 0.5px; }
     .bulk-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .bulk-btn {
-      padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border-input);
-      background: #fff; color: #444; cursor: pointer;
+      padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border-col);
+      background: var(--row-bg); color: var(--text-muted); cursor: pointer;
       font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
       transition: all 0.15s; white-space: nowrap;
     }
-    .bulk-btn:hover { background: #f0f0f0; border-color: #bbb; }
+    .bulk-btn:hover { background: var(--surface-alt); border-color: var(--text-muted); color: var(--text); }
     .bulk-btn.danger { border-color: #fca5a5; color: #dc2626; background: #fff5f5; }
     .bulk-btn.danger:hover { background: #fee2e2; }
 
@@ -486,7 +486,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v44</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v46</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -2352,9 +2352,9 @@ function renderArchiveInline(list) {
     return name.includes(searchQuery) || size.includes(searchQuery) || meta.includes(searchQuery) || date.includes(searchQuery);
   });
 
-  // Stats
-  const total = archiveData.length;
-  const revenue = archiveData.reduce((a, s) => {
+  // Stats - use baseArchive which is already filtered by currentCategory
+  const total = baseArchive.length;
+  const revenue = baseArchive.reduce((a, s) => {
     const n = parseFloat((s.price || "").replace(/[^0-9.]/g, ""));
     return a + (isNaN(n) ? 0 : n);
   }, 0);
