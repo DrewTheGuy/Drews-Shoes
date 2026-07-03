@@ -486,7 +486,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v48</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v49</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -635,16 +635,42 @@
     <!-- Site Stats -->
     <div class="card">
       <h2>Site Stats</h2>
-      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:12px;">
-        <div class="stat-box"><div class="stat-value green" id="statActive">—</div><div class="stat-label">Active</div></div>
-        <div class="stat-box"><div class="stat-value" id="statInactive">—</div><div class="stat-label">Inactive</div></div>
-        <div class="stat-box"><div class="stat-value red" id="statSold">—</div><div class="stat-label">History</div></div>
-      </div>
-      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="stat-box"><div class="stat-value" id="statSneakers">—</div><div class="stat-label">Sneakers</div></div>
-        <div class="stat-box"><div class="stat-value" id="statStreetwear">—</div><div class="stat-label">Streetwear</div></div>
-        <div class="stat-box"><div class="stat-value" id="statCards">—</div><div class="stat-label">Trading Cards</div></div>
-      </div>
+      <table id="statsTable" style="width:100%; border-collapse:collapse; font-family:'Manrope',sans-serif; font-size:13px;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border-col);">
+            <th style="text-align:left; padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted);">Category</th>
+            <th style="text-align:center; padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:#16a34a;">Active</th>
+            <th style="text-align:center; padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--text-muted);">Inactive</th>
+            <th style="text-align:center; padding:8px 12px; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:#dc2626;">History</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border-col);">
+            <td style="padding:10px 12px; font-weight:600; color:var(--text);">Sneakers</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statSneakersActive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statSneakersInactive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statSneakersHistory">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border-col);">
+            <td style="padding:10px 12px; font-weight:600; color:var(--text);">Streetwear</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statStreetwearActive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statStreetwearInactive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statStreetwearHistory">—</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border-col);">
+            <td style="padding:10px 12px; font-weight:600; color:var(--text);">Trading Cards</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statCardsActive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statCardsInactive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:700; color:var(--text);" id="statCardsHistory">—</td>
+          </tr>
+          <tr style="background:var(--surface-alt);">
+            <td style="padding:10px 12px; font-weight:700; color:var(--text); font-size:12px; letter-spacing:0.5px; text-transform:uppercase;">Total</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:800; color:#16a34a; font-size:15px;" id="statActive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:800; color:var(--text); font-size:15px;" id="statInactive">—</td>
+            <td style="text-align:center; padding:10px 12px; font-weight:800; color:#dc2626; font-size:15px;" id="statSold">—</td>
+          </tr>
+        </tbody>
+      </table>
       <button class="btn-secondary" style="margin-top:4px;" onclick="loadStats().then(()=>showToast('Stats refreshed!'))">Refresh Stats</button>
     </div>
 
@@ -1914,16 +1940,30 @@ async function loadStats() {
     rows.forEach(row => { const item = normalize(row); if (data[item.category]) data[item.category].push(item); });
 
     const allProducts = Object.values(data).flat();
-    const active = allProducts.filter(p => p.status === "active" || p.status === "in-stock").length;
-    const inactive = allProducts.filter(p => p.status === "inactive").length;
-    const soldRows = await sbFetch("/rest/v1/sold_archive?select=id");
+    const soldRows = await sbFetch("/rest/v1/sold_archive?select=*&order=sold_at.desc");
     const sold = soldRows.length;
-    document.getElementById("statActive").textContent = active;
-    document.getElementById("statInactive").textContent = inactive;
-    document.getElementById("statSold").textContent = sold;
-    document.getElementById("statSneakers").textContent = (data.sneakers || []).length;
-    document.getElementById("statStreetwear").textContent = (data.streetwear || []).length;
-    document.getElementById("statCards").textContent = (data.cards || []).length;
+
+    const isActive = p => p.status === "active" || p.status === "in-stock";
+    const isInactive = p => p.status === "inactive";
+
+    // Per category
+    const cats = { sneakers: data.sneakers || [], streetwear: data.streetwear || [], cards: data.cards || [] };
+    const archiveByCat = { sneakers: 0, streetwear: 0, cards: 0 };
+    soldRows.forEach(r => { if (archiveByCat[r.category] !== undefined) archiveByCat[r.category]++; });
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set("statSneakersActive",   cats.sneakers.filter(isActive).length);
+    set("statSneakersInactive", cats.sneakers.filter(isInactive).length);
+    set("statSneakersHistory",  archiveByCat.sneakers);
+    set("statStreetwearActive",   cats.streetwear.filter(isActive).length);
+    set("statStreetwearInactive", cats.streetwear.filter(isInactive).length);
+    set("statStreetwearHistory",  archiveByCat.streetwear);
+    set("statCardsActive",   cats.cards.filter(isActive).length);
+    set("statCardsInactive", cats.cards.filter(isInactive).length);
+    set("statCardsHistory",  archiveByCat.cards);
+    set("statActive",   allProducts.filter(isActive).length);
+    set("statInactive", allProducts.filter(isInactive).length);
+    set("statSold",     sold);
   } catch(e) { console.error("Stats error:", e); }
 }
 
