@@ -42,6 +42,7 @@ async function fetchProducts() {
       image: r.image,
       images: (() => { try { return JSON.parse(r.images); } catch(e) { return [r.image]; } })(),
       stripeLink: r.stripe_link,
+      stripeHidden: r.stripe_hidden || false,
       stock: r.stock
     }));
 }
@@ -225,6 +226,7 @@ function openModal(btn) {
   const meta = btn.dataset.meta;
   const price = btn.dataset.price;
   const stripeLink = btn.dataset.stripe;
+  const stripeHidden = btn.dataset.stripeHidden === "true";
 
   document.getElementById("modalProduct").textContent = name;
   document.getElementById("modalMeta").textContent = meta + "  ·  " + price;
@@ -237,7 +239,7 @@ function openModal(btn) {
   const stripeBtn = document.getElementById("modalStripe");
   const divider = document.getElementById("modalContactDivider");
   const prompt = document.getElementById("modalPrompt");
-  if (stripeLink) {
+  if (stripeLink && !stripeHidden) {
     stripeBtn.href = stripeLink;
     stripeBtn.style.display = "flex";
     divider.style.display = "flex";
@@ -295,6 +297,7 @@ function renderGrid(gridId, items, countId) {
       btn.dataset.meta = displayMeta;
       btn.dataset.price = item.price;
       btn.dataset.stripe = item.stripeLink || "";
+      btn.dataset.stripeHidden = item.stripeHidden ? "true" : "false";
       btn.addEventListener("click", function(e) { e.stopPropagation(); openModal(this); });
     }
     grid.appendChild(card);
