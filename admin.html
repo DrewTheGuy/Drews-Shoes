@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v22</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v23</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -811,7 +811,7 @@
     <p class="confirm-message" id="bulkRemoveMessage"></p>
     <p class="confirm-sub">This permanently deletes the selected products. This cannot be undone.</p>
     <div class="confirm-btns">
-      <button class="btn-primary" style="background:#dc2626;" onclick="window.confirmBulkRemove ? window.confirmBulkRemove() : confirmBulkRemove()">Yes, Remove</button>
+      <button class="btn-primary" style="background:#dc2626;" onclick="confirmBulkRemove()">Yes, Remove</button>
       <button class="btn-secondary" onclick="document.getElementById('bulkRemoveModal').classList.remove('active')">Cancel</button>
     </div>
   </div>
@@ -1386,6 +1386,12 @@ async function confirmBulkSold() {
 
 async function confirmBulkRemove() {
   document.getElementById("bulkRemoveModal").classList.remove("active");
+  // If opened from history, run archive delete instead
+  if (window.bulkRemoveFromArchive) {
+    window.bulkRemoveFromArchive = false;
+    await confirmBulkArchiveDelete();
+    return;
+  }
   showWorking();
   const ids = [...selectedIds];
   const removeResults = await Promise.all(ids.map(async id => {
@@ -2250,7 +2256,8 @@ async function confirmBulkArchiveRelist() {
 
 function openBulkArchiveDeleteModal() {
   const count = archiveSelected.size;
-  document.getElementById("bulkRemoveMessage").textContent = `${count} archive item${count > 1 ? 's' : ''} will be permanently deleted.`;
+  document.getElementById("bulkRemoveMessage").textContent = `${count} item${count > 1 ? 's' : ''} will be permanently removed from History.`;
+  window.bulkRemoveFromArchive = true;
   document.getElementById("bulkRemoveModal").classList.add("active");
 }
 
@@ -2283,7 +2290,24 @@ function deleteArchiveItem(id) {
   document.getElementById("removeModal").classList.add("active");
 }
 
-async function confirmArchiveDelete() {
+async function confirmBulkArchiveDelete() {
+  const ids = [...archiveSelected];
+  showWorking();
+  const results = await Promise.all(ids.map(async id => {
+    try {
+      await sbFetch(`/rest/v1/sold_archive?id=eq.${id}`, { method: "DELETE" });
+      return id;
+    } catch(e) { console.error(e); return null; }
+  }));
+  const removed = results.filter(Boolean);
+  archiveData = archiveData.filter(a => !removed.includes(a.id));
+  archiveSelected.clear();
+  hideWorking();
+  renderList();
+  showToast(`${removed.length} item${removed.length > 1 ? 's' : ''} removed from History!`);
+}
+
+async async function confirmArchiveDelete() {
   const id = window.pendingArchiveDeleteId;
   if (!id) return;
   document.getElementById("removeModal").classList.remove("active");
