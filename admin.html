@@ -462,7 +462,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v23</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v24</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1866,7 +1866,7 @@ function renderArchive() {
         <div class="product-price">${s.price}</div>
         <div class="product-actions">
           <button class="btn-edit" onclick="openArchiveEdit(${s.id})">Edit</button>
-          <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
+          <button class="btn-status" style="background:#dcfce7;color:#16a34a;border:none;" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
@@ -2220,7 +2220,7 @@ function renderArchiveInline(list) {
         <div class="product-price">${s.price}</div>
         <div class="product-actions">
           <button class="btn-edit" onclick="openArchiveEdit(${s.id})">Edit</button>
-          <button class="btn-edit" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
+          <button class="btn-status" style="background:#dcfce7;color:#16a34a;border:none;" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
           <button class="btn-copy" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
