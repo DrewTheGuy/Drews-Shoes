@@ -226,8 +226,13 @@
       font-family: 'Manrope', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    .btn-status.in-stock { background: #f0f0f0; color: #444; }
-    .btn-status.in-stock:hover { background: #e4e4e4; }
+    .btn-status.in-stock { background: #f0f0f0; color: #444; border-color: #ddd; }
+    .btn-status.in-stock:hover { background: #e4e4e4; border-color: #bbb; }
+    [data-theme="dark"] .btn-status.in-stock { background: var(--surface-alt); border-color: var(--border-col); color: var(--text-muted); }
+    [data-theme="dark"] .btn-status.in-stock:hover { background: var(--row-selected); border-color: var(--text-muted); color: var(--text); }
+    .btn-status-active { background:#dcfce7 !important; color:#16a34a !important; border:1px solid #86efac !important; }
+    .btn-status-active:hover { background:#bbf7d0 !important; border-color:#4ade80 !important; }
+    [data-theme="dark"] .btn-status-active { background:#052e16 !important; border-color:#166534 !important; color:#4ade80 !important; }
     .btn-status.sold { background: #fee2e2; color: #dc2626; }
     .btn-sold {
       padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-col);
@@ -481,7 +486,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v43</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v44</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
