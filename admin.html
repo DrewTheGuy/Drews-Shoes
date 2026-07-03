@@ -483,7 +483,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v40</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v41</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1259,9 +1259,10 @@ function renderList() {
                     : 'background:#f5f3ff; border:1px solid #c4b5fd; color:#635bff;'}">
                   <span style="width:14px;height:14px;border-radius:50%;
                     display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                    font-size:9px;font-weight:900;
-                    ${item.stripeHidden ? 'background:#fca5a5;color:#fff;' : 'background:#635bff;color:#fff;'}">
-                    ${item.stripeHidden ? '×' : '✓'}
+                    ${item.stripeHidden ? 'background:#fca5a5;' : 'background:#635bff;'}">
+                    ${item.stripeHidden
+                      ? '<svg width="8" height="8" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>'
+                      : '<svg width="8" height="8" viewBox="0 0 10 10" fill="none"><polyline points="1,5 4,8 9,2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'}
                   </span>
                   Stripe ${item.stripeHidden ? 'Off' : 'On'}
                 </button>`
