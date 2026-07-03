@@ -341,4 +341,9 @@ document.addEventListener("DOMContentLoaded", async function() {
   renderGrid("sneakerGrid", shoes, "sneakerCount");
   renderGrid("streetwearGrid", streetwear, "streetwearCount");
   renderGrid("cardsGrid", cards, "cardsCount");
+
+  // Hide homepage sections that have no products
+  if (!uniqueShoes.length) { const s = document.getElementById("sneakersSection"); if (s) s.style.display = "none"; }
+  if (!streetwear.length) { const s = document.getElementById("streetwearSection"); if (s) s.style.display = "none"; }
+  if (!cards.length) { const s = document.getElementById("cardsSection"); if (s) s.style.display = "none"; }
 });
