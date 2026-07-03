@@ -200,10 +200,9 @@
     [data-theme="dark"] .bulk-btn.active-action { background:#052e16; border-color:#166534; color:#4ade80; }
     .bulk-btn.active-action:hover { background:#bbf7d0; border-color:#4ade80; }
     [data-theme="dark"] .bulk-btn.active-action { background:#052e16; border-color:#166534; color:#4ade80; }
-    .bulk-btn.sold-action { background:var(--row-bg); border-color:#fca5a5; color:#dc2626; }
-    .bulk-btn.sold-action:hover { background:#fff5f5; border-color:#f87171; }
-    [data-theme="dark"] .bulk-btn.sold-action { background:var(--row-bg); border-color:#7f1d1d; color:#fca5a5; }
-    [data-theme="dark"] .bulk-btn.sold-action:hover { background:#1f0808; }
+    .bulk-btn.sold-action { background:var(--row-bg); border-color:var(--border-col); color:var(--text-muted); }
+    .bulk-btn.sold-action:hover { background:#fff5f5; border-color:#fca5a5; color:#dc2626; }
+    [data-theme="dark"] .bulk-btn.sold-action:hover { background:#1f0808; border-color:#7f1d1d; color:#fca5a5; }
     [data-theme="dark"] .status-pill:hover:not(.active) { border-color: var(--text-muted) !important; color: var(--text) !important; }
     .btn-copy {
       padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border-col);
@@ -231,14 +230,13 @@
     .btn-status.in-stock:hover { background: #e4e4e4; }
     .btn-status.sold { background: #fee2e2; color: #dc2626; }
     .btn-sold {
-      padding: 5px 10px; border-radius: 6px; border: 1px solid #fca5a5;
-      background: var(--row-bg); color: #dc2626; cursor: pointer;
+      padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border-col);
+      background: var(--row-bg); color: var(--text-muted); cursor: pointer;
       font-size: 11px; font-weight: 600; font-family: 'Manrope', sans-serif;
       transition: all 0.15s; white-space: nowrap;
     }
-    .btn-sold:hover { background: #fff5f5; border-color: #f87171; }
-    [data-theme="dark"] .btn-sold { background: var(--row-bg); border-color: #7f1d1d; color: #fca5a5; }
-    [data-theme="dark"] .btn-sold:hover { background: #1f0808; }
+    .btn-sold:hover { background: #fff5f5; border-color: #fca5a5; color: #dc2626; }
+    [data-theme="dark"] .btn-sold:hover { background: #1f0808; border-color: #7f1d1d; color: #fca5a5; }
 
     .sub-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 
@@ -483,7 +481,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v41</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v42</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1997,7 +1995,7 @@ function renderArchive() {
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="openArchiveBulkEditModal()">Edit Selected</button>
           <button class="bulk-btn active-action" onclick="openBulkArchiveRelistModal()">Move to Active</button>
-          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
+          <button class="bulk-btn inactive-action" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
         </div>` : ''}
     </div>`;
@@ -2018,7 +2016,7 @@ function renderArchive() {
         <div class="product-actions">
           <button class="btn-edit" onclick="openArchiveEdit(${s.id})">Edit</button>
           <button class="btn-status" style="background:#dcfce7;color:#16a34a;border:none;" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
-          <button class="btn-edit" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
+          <button class="btn-status in-stock" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
       </div>
@@ -2375,7 +2373,7 @@ function renderArchiveInline(list) {
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="openArchiveBulkEditModal()">Edit Selected</button>
           <button class="bulk-btn active-action" onclick="openBulkArchiveRelistModal()">Move to Active</button>
-          <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
+          <button class="bulk-btn inactive-action" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
         </div>` : ''}
     </div>`;
@@ -2401,7 +2399,7 @@ function renderArchiveInline(list) {
         <div class="product-actions">
           <button class="btn-edit" onclick="openArchiveEdit(${s.id})">Edit</button>
           <button class="btn-status" style="background:#dcfce7;color:#16a34a;border:none;" onclick="sendArchiveToActive(${s.id})">Move to Active</button>
-          <button class="btn-edit" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
+          <button class="btn-status in-stock" onclick="sendArchiveToInactive(${s.id})">Move to Inactive</button>
           <button class="btn-danger" onclick="deleteArchiveItem(${s.id})">Remove</button>
         </div>
       </div>
