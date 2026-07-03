@@ -486,7 +486,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v46</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v47</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1913,7 +1913,7 @@ async function loadStats() {
 
     const allProducts = Object.values(data).flat();
     const total = allProducts.length;
-    const available = allProducts.filter(p => p.status !== "sold" && p.status !== "inactive" && p.stock > 0).length;
+    const available = allProducts.filter(p => p.status === "active" || p.status === "in-stock").length;
     const soldRows = await sbFetch("/rest/v1/sold_archive?select=id");
     const sold = soldRows.length;
     document.getElementById("statTotal").textContent = total + sold;
