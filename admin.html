@@ -471,7 +471,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v35</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v36</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -1209,9 +1209,9 @@ function renderList() {
             Stripe
           </button>
           <div style="width:1px; height:18px; background:var(--border-col); margin:0 4px;"></div>
-          ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')">Move to Active</button>` : ''}
+          ${currentStatus === 'inactive' ? `<button class="bulk-btn" onclick="bulkAction('active')" class="bulk-btn active-action">Move to Active</button>` : ''}
           ${currentStatus === 'active' ? `<button class="bulk-btn" onclick="bulkAction('inactive')">Move to Inactive</button>` : ''}
-          <button class="bulk-btn" onclick="bulkAction('sold')">Mark as Sold</button>
+          <button class="bulk-btn" onclick="bulkAction('sold')" class="bulk-btn sold-action">Mark as Sold</button>
           <button class="bulk-btn" onclick="openBulkEditModal()">Edit Selected</button>
           <button class="bulk-btn danger" onclick="bulkAction('delete')">Remove</button>
         </div>` : ''}
@@ -1239,15 +1239,16 @@ function renderList() {
           <div style="margin-top:4px;">
             ${item.stripeLink
               ? `<button onclick="toggleStripeHidden(${item.id})" style="
-                  display:inline-flex; align-items:center; gap:5px;
-                  padding:3px 9px; border-radius:5px; cursor:pointer;
-                  font-size:10px; font-weight:700; font-family:'Manrope',sans-serif;
-                  transition:all 0.15s;
+                  display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
+                  border-radius:20px; cursor:pointer; font-size:10px; font-weight:700;
+                  font-family:'Manrope',sans-serif; transition:all 0.15s;
                   ${item.stripeHidden
                     ? 'background:#fff5f5; border:1px solid #fca5a5; color:#dc2626;'
-                    : 'background:#f5f3ff; border:1px solid #c4b5fd; color:#635bff;'
-                  }">
-                  <span>${item.stripeHidden ? '✕' : '✓'}</span>
+                    : 'background:#f5f3ff; border:1px solid #c4b5fd; color:#635bff;'}">
+                  <span style="width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;
+                    ${item.stripeHidden ? 'background:#fca5a5;color:#fff;' : 'background:#635bff;color:#fff;'}">
+                    ${item.stripeHidden ? '✕' : '✓'}
+                  </span>
                   Stripe ${item.stripeHidden ? 'Off' : 'On'}
                 </button>`
               : `<span style="font-size:10px; color:var(--text-faint); font-weight:600;">No Stripe Link</span>`
@@ -1980,7 +1981,7 @@ function renderArchive() {
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="openArchiveBulkEditModal()">Edit Selected</button>
-          <button class="bulk-btn" onclick="openBulkArchiveRelistModal()">Move to Active</button>
+          <button class="bulk-btn" onclick="openBulkArchiveRelistModal()" class="bulk-btn active-action">Move to Active</button>
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
         </div>` : ''}
@@ -2358,7 +2359,7 @@ function renderArchiveInline(list) {
       ${archiveBulkVisible ? `
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-left:4px;">
           <button class="bulk-btn" onclick="openArchiveBulkEditModal()">Edit Selected</button>
-          <button class="bulk-btn" onclick="openBulkArchiveRelistModal()">Move to Active</button>
+          <button class="bulk-btn" onclick="openBulkArchiveRelistModal()" class="bulk-btn active-action">Move to Active</button>
           <button class="bulk-btn" onclick="archiveBulkAction('inactive')">Move to Inactive</button>
           <button class="bulk-btn danger" onclick="openBulkArchiveDeleteModal()">Remove Selected</button>
         </div>` : ''}
