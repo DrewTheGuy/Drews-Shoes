@@ -486,7 +486,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v47</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v48</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -635,10 +635,12 @@
     <!-- Site Stats -->
     <div class="card">
       <h2>Site Stats</h2>
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-value" id="statTotal">—</div><div class="stat-label">Total Listings</div></div>
-        <div class="stat-box"><div class="stat-value green" id="statAvailable">—</div><div class="stat-label">Available</div></div>
-        <div class="stat-box"><div class="stat-value red" id="statSold">—</div><div class="stat-label">Sold</div></div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:12px;">
+        <div class="stat-box"><div class="stat-value green" id="statActive">—</div><div class="stat-label">Active</div></div>
+        <div class="stat-box"><div class="stat-value" id="statInactive">—</div><div class="stat-label">Inactive</div></div>
+        <div class="stat-box"><div class="stat-value red" id="statSold">—</div><div class="stat-label">History</div></div>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
         <div class="stat-box"><div class="stat-value" id="statSneakers">—</div><div class="stat-label">Sneakers</div></div>
         <div class="stat-box"><div class="stat-value" id="statStreetwear">—</div><div class="stat-label">Streetwear</div></div>
         <div class="stat-box"><div class="stat-value" id="statCards">—</div><div class="stat-label">Trading Cards</div></div>
@@ -1912,12 +1914,12 @@ async function loadStats() {
     rows.forEach(row => { const item = normalize(row); if (data[item.category]) data[item.category].push(item); });
 
     const allProducts = Object.values(data).flat();
-    const total = allProducts.length;
-    const available = allProducts.filter(p => p.status === "active" || p.status === "in-stock").length;
+    const active = allProducts.filter(p => p.status === "active" || p.status === "in-stock").length;
+    const inactive = allProducts.filter(p => p.status === "inactive").length;
     const soldRows = await sbFetch("/rest/v1/sold_archive?select=id");
     const sold = soldRows.length;
-    document.getElementById("statTotal").textContent = total + sold;
-    document.getElementById("statAvailable").textContent = available;
+    document.getElementById("statActive").textContent = active;
+    document.getElementById("statInactive").textContent = inactive;
     document.getElementById("statSold").textContent = sold;
     document.getElementById("statSneakers").textContent = (data.sneakers || []).length;
     document.getElementById("statStreetwear").textContent = (data.streetwear || []).length;
