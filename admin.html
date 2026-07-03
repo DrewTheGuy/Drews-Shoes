@@ -471,7 +471,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v27</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v28</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -922,7 +922,8 @@ function normalize(row) {
     size: row.size, meta: row.meta, price: row.price,
     status: row.status || "inactive", stock: row.stock, image: row.image,
     images: (() => { try { return JSON.parse(row.images); } catch(e) { return [row.image]; } })(),
-    stripeLink: row.stripe_link
+    stripeLink: row.stripe_link,
+    stripeHidden: row.stripe_hidden || false
   };
 }
 
@@ -1110,7 +1111,7 @@ async function addProduct() {
 
   if (!name || !price) { showToast("Name and price are required"); return; }
 
-  const payload = { name, price, status: "inactive", category: document.getElementById("inputCategory").value, image: image || "", images: JSON.stringify(images), stripe_link: stripeLink || null, stock: 0 };
+  const payload = { name, price, status: "inactive", category: document.getElementById("inputCategory").value, image: image || "", images: JSON.stringify(images), stripe_link: stripeLink || null, stock: 0, stripe_hidden: false };
 
   if (document.getElementById("inputCategory").value === "sneakers") {
     const size = parseFloat(document.getElementById("inputSize").value);
@@ -1220,7 +1221,24 @@ function renderList() {
         <img class="product-thumb" src="${item.image}" onerror="this.src=''" alt="">
         <div class="product-info">
           <div class="product-name" style="color:var(--text);">${item.name}</div>
-          <div class="product-meta">${meta}${item.stripeLink ? ' &middot; <span style="color:#635bff;font-weight:700;">Stripe ✓</span>' : ''}</div>
+          <div class="product-meta">${meta}</div>
+          <div style="margin-top:4px;">
+            ${item.stripeLink
+              ? `<button onclick="toggleStripeHidden(${item.id})" style="
+                  display:inline-flex; align-items:center; gap:5px;
+                  padding:3px 9px; border-radius:5px; cursor:pointer;
+                  font-size:10px; font-weight:700; font-family:'Manrope',sans-serif;
+                  transition:all 0.15s;
+                  ${item.stripeHidden
+                    ? 'background:#fff5f5; border:1px solid #fca5a5; color:#dc2626;'
+                    : 'background:#f5f3ff; border:1px solid #c4b5fd; color:#635bff;'
+                  }">
+                  <span>${item.stripeHidden ? '✕' : '✓'}</span>
+                  Stripe ${item.stripeHidden ? 'Off' : 'On'}
+                </button>`
+              : `<span style="font-size:10px; color:var(--text-faint); font-weight:600;">No Stripe Link</span>`
+            }
+          </div>
         </div>
         <div class="product-price">${item.price}</div>
         <div class="product-actions">
@@ -1267,6 +1285,20 @@ async function changeStatus(id, newStatus) {
 }
 
 // ID-BASED WRAPPERS
+async function toggleStripeHidden(id) {
+  const item = getItemById(id);
+  if (!item) return;
+  const newVal = !item.stripeHidden;
+  showWorking("row-" + id);
+  try {
+    await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ stripe_hidden: newVal }) });
+    item.stripeHidden = newVal;
+    hideWorking("row-" + id);
+    renderList();
+    showToast(newVal ? "Stripe button hidden on site" : "Stripe button visible on site");
+  } catch(e) { hideWorking("row-" + id); showToast("Failed to update"); console.error(e); }
+}
+
 function getItemById(id) { return Object.values(data).flat().find(p => p.id === id); }
 function getIndexById(id) {
   for (const cat of Object.keys(data)) {
