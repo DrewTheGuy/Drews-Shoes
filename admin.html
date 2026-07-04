@@ -486,7 +486,7 @@
 <body>
 
 <header class="header">
-  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v49</span></h1>
+  <h1>DREWS SHOES — Admin <span style="font-size:10px;font-weight:500;opacity:0.4;letter-spacing:1px;">v50</span></h1>
   <div style="display:flex; align-items:center; gap:16px;">
     <button id="themeToggle" onclick="toggleTheme()" aria-label="Toggle dark mode" style="background:none; border:none; cursor:pointer; padding:0; display:flex; align-items:center;">
       <div id="themeSwitch" style="width:52px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); display:flex; align-items:center; padding:3px; transition:background 0.25s; position:relative;">
@@ -908,6 +908,10 @@
         <input type="text" id="bulkEditImage" placeholder="images/products/filename.jpg">
       </div>
       <div class="form-group full">
+        <label>Additional Images (one per line)</label>
+        <textarea id="bulkEditImages" rows="3" style="resize:vertical;" placeholder="images/products/shoe-side.jpg&#10;images/products/shoe-sole.jpg"></textarea>
+      </div>
+      <div class="form-group full">
         <label>Stripe Payment Link</label>
         <input type="text" id="bulkEditStripe" placeholder="https://buy.stripe.com/...">
       </div>
@@ -1318,6 +1322,7 @@ function renderList() {
             : `<div class="form-group"><label>Size / Description</label><input type="text" id="edit-meta-${item.id}" value="${(item.meta || '').replace(/"/g, '&quot;')}"></div>`}
           <div class="form-group"><label>Price</label><input type="text" id="edit-price-${item.id}" value="${item.price}"></div>
           <div class="form-group full"><label>Image URL</label><input type="text" id="edit-image-${item.id}" value="${item.image}"></div>
+          <div class="form-group full"><label>Additional Images (one per line)</label><textarea id="edit-images-${item.id}" rows="3" style="resize:vertical;">${(item.images && item.images.length > 1 ? item.images.slice(1) : []).join('\n')}</textarea></div>
           <div class="form-group full"><label>Stripe Payment Link</label><input type="text" id="edit-stripe-${item.id}" value="${item.stripeLink || ''}" placeholder="https://buy.stripe.com/..."></div>
         </div>
         <div style="display:flex; gap:8px; margin-top:16px;">
@@ -1446,7 +1451,7 @@ async function bulkAction(action) {
 function openBulkEditModal() {
   if (!selectedIds.size) return;
   document.getElementById("bulkEditCount").textContent = selectedIds.size;
-  ["bulkEditName","bulkEditSize","bulkEditMeta","bulkEditPrice","bulkEditImage","bulkEditStripe"]
+  ["bulkEditName","bulkEditSize","bulkEditMeta","bulkEditPrice","bulkEditImage","bulkEditImages","bulkEditStripe"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   const isSneakerCat = currentCategory === "sneakers";
   const hasMultiCat = currentCategory === "all";
@@ -1475,7 +1480,14 @@ async function confirmBulkEdit() {
   const basePayload = {};
   if (nameVal) basePayload.name = nameVal;
   if (priceVal) basePayload.price = priceVal;
-  if (imageVal) { basePayload.image = imageVal; basePayload.images = JSON.stringify([imageVal]); }
+  const bulkExtraImages = document.getElementById("bulkEditImages") ? 
+    document.getElementById("bulkEditImages").value.split("\n").map(s => s.trim()).filter(Boolean) : [];
+  if (imageVal) { 
+    basePayload.image = imageVal; 
+    basePayload.images = JSON.stringify([imageVal, ...bulkExtraImages]); 
+  } else if (bulkExtraImages.length) {
+    basePayload.images = JSON.stringify(bulkExtraImages);
+  }
   if (stripeVal) basePayload.stripe_link = stripeVal;
   if (!Object.keys(basePayload).length && !sizeVal && !metaVal) { showToast("No changes to save"); return; }
   closeBulkEditModal();
@@ -1797,13 +1809,16 @@ async function saveEdit_id(id) {
   const priceInput = document.getElementById("edit-price-" + id).value.trim().replace(/[^0-9.]/g, "");
   const price = priceInput ? "$" + formatPrice(priceInput) : document.getElementById("edit-price-" + id).value.trim();
   const image = document.getElementById("edit-image-" + id).value.trim();
+  const extraImagesEl = document.getElementById("edit-images-" + id);
+  const extraImages = extraImagesEl ? extraImagesEl.value.split("\n").map(s => s.trim()).filter(Boolean) : [];
+  const allImages = image ? [image, ...extraImages] : extraImages;
   const stripeVal = document.getElementById("edit-stripe-" + id).value.trim();
-  const payload = { name, price, image, images: JSON.stringify(image ? [image] : []), stripe_link: stripeVal || null, status: item.status };
+  const payload = { name, price, image, images: JSON.stringify(allImages), stripe_link: stripeVal || null, status: item.status };
   if (item.category === "sneakers") payload.size = parseFloat(document.getElementById("edit-size-" + id).value) || item.size;
   else payload.meta = document.getElementById("edit-meta-" + id).value.trim();
   try {
     await sbFetch(`/rest/v1/products?id=eq.${id}`, { method: "PATCH", body: JSON.stringify(payload) });
-    Object.assign(item, { name, price, image, images: [image], stripeLink: stripeVal || null });
+    Object.assign(item, { name, price, image, images: allImages, stripeLink: stripeVal || null });
     if (payload.size) item.size = payload.size;
     if (payload.meta !== undefined) item.meta = payload.meta;
     hideWorking("row-" + id); closeEdit_id(id); renderList(); showToast("Saved!");
